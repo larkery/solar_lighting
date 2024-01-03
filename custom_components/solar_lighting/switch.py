@@ -162,7 +162,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 if entity_id not in self._manual_brightness and \
                    light.get("brightness_adjust"):
                     if self._sleep_mode:
-                        brightness = 255*self.sleep_brightness/100
+                        brightness = 255*self._sleep_brightness/100
                     else:
                         brightness = evaluate_curve(now, sunrise, noon, sunset,
                                                     light.get("brightness_k"),
@@ -201,6 +201,15 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         _LOGGER.warning("temperature: %s %s", self._manual_temperature, self._expected_temperature)
         
         _LOGGER.warning("Before grouping: %s", target_state)
+
+        ## expectations set for individual lights not groups
+        ## does this make sense?
+        for (entity_id, state) in target_state.items():
+            if entity_id in needs_update:
+                if ATTR_BRIGHTNESS in state:
+                    self._expected_brightness[entity_id] = state[ATTR_BRIGHTNESS]
+                if ATTR_COLOR_TEMP in state:
+                    self._expected_temperature[entity_id] = state[ATTR_COLOR_TEMP]
         
         # Process groups. Nested groups are not handled.
         for group in self._groups:
@@ -235,10 +244,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     )
                 )
             )
-            if ATTR_BRIGHTNESS in state:
-                self._expected_brightness[entity_id] = state[ATTR_BRIGHTNESS]
-            if ATTR_COLOR_TEMP in state:
-                self._expected_temperature[entity_id] = state[ATTR_COLOR_TEMP]
         if turn_ons:
             await asyncio.wait(turn_ons)
 
