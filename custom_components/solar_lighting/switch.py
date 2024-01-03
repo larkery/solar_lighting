@@ -162,13 +162,13 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 if entity_id not in self._manual_brightness and \
                    light.get("brightness_adjust"):
                     if self._sleep_mode:
-                        brightness = self.sleep_brightness
+                        brightness = 255*self.sleep_brightness/100
                     else:
                         brightness = evaluate_curve(now, sunrise, noon, sunset,
                                                     light.get("brightness_k"),
                                                     light.get("brightness_x"),
-                                                    light.get("brightness_min"),
-                                                    light.get("brightness_max"))
+                                                    255*light.get("brightness_min")/100,
+                                                    255*light.get("brightness_max")/100)
                     update[ATTR_BRIGHTNESS] = brightness
                     cur = state.attributes.get(ATTR_BRIGHTNESS, None)
                     if not(cur) or abs(cur - brightness) > delta:
