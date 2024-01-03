@@ -307,7 +307,7 @@ def get_times(hass):
     today = now.replace(hour = 0, minute = 0, second = 0)
     sunrise = loc.sunrise(today)
     sunset = loc.sunset(today)
-    noon = loc.solar_noon(today)
+    noon = loc.noon(today)
 
     sunrise = (sunrise.hour + sunrise.minute / 60) / 24
     sunset = (sunset.hour + sunset.minute / 60) / 24
