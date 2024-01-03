@@ -34,6 +34,8 @@ from homeassistant.helpers.event import (
 
 from . import DOMAIN
 
+_LOGGER = logging.getLogger(__name__)
+
 brightness = vol.All( vol.Coerce(int), vol.Range(min=1, max=100) )
 colour_temp = vol.All( vol.Coerce(int), vol.Range(min=1000, max=10000) )
 
@@ -194,6 +196,11 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 self._expected_brightness.pop(entity_id, None)
                 self._expected_temperature.pop(entity_id, None)
 
+        _LOGGER.info("brightness: %s %s", self._manual_brightness, self._expected_brightness)
+        _LOGGER.info("temperature: %s %s", self._manual_temperature, self._expected_temperature)
+        
+        _LOGGER.info("Before grouping: %s", target_state)
+        
         # Process groups. Nested groups are not handled.
         for group in self._groups:
             members = group.get("group")
@@ -212,12 +219,14 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     if targets[0]:
                         target_state[group.get(ATTR_ENTITY_ID)] = targets[0]
 
+
+        _LOGGER.info("After grouping: %s", target_state)
         # OK, target_state now contains groups as well
         # so we can issue our update commands, and then set expectations
         turn_ons = []
         for (entity_id, state) in target_state.items():
             state[ATTR_ENTITY_ID] = entity_id
-
+            _LOGGER.info("Service call: %s", state)
             turn_ons.append(
                 self.hass.async_create_task(
                     self.hass.services.async_call(
