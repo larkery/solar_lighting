@@ -28,6 +28,10 @@ from homeassistant.const import (
     STATE_ON,
 )
 
+from homeassistant.helpers.event import (
+    async_track_time_interval
+)
+
 from . import DOMAIN
 
 brightness = vol.All( vol.Coerce(int), vol.Range(min=1, max=100) )
