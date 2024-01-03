@@ -122,7 +122,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         return self._state
 
     async def update_lights(self):
-        if not(self._state) return
+        if not(self._state): return
         sunrise, noon, sunset, now = get_times(self.hass)
 
         target_state = {}
