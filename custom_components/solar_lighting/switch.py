@@ -126,7 +126,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
     def is_on(self):
         return self._state
 
-    async def update_lights(self):
+    async def update_lights(self, *args):
         if not(self._state): return
         sunrise, noon, sunset, now = get_times(self.hass)
 
@@ -187,7 +187,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
 
                 if entity_id in needs_update:
                     update[ATTR_TRANSITION] = light.get("transition", 0)
-                    target_state[light] = update
+                    target_state[entity_id] = update
             else:
                 self._manual_brightness.discard(entity_id)
                 self._manual_temperature.discard(entity_id)
