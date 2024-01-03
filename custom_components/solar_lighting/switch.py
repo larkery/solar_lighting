@@ -331,7 +331,7 @@ def evaluate_curve(now, sunrise, noon, sunset, k, x, minimum, maximum):
         x = (1+tanh(k*(now - (sunrise + x))))/2
     else:
         x = (1+tanh(k*(sunset - (now + x))))/2
-    return minimum + (maximum - minimum) * x
+    return int(minimum + (maximum - minimum) * x)
 
 def all_equal(xs):
     if xs:
