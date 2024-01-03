@@ -247,7 +247,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             self.clear_overrides_and_expectations()
             await self.update_lights()
 
-    def clear_overrides_and_expectations():
+    def clear_overrides_and_expectations(self):
         self._expected_temperature = {}
         self._expected_brightness = {}
         self._manual_temperature = set()
