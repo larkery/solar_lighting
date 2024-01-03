@@ -49,7 +49,7 @@ settings_schema = vol.Schema({
     vol.Optional("sleep_brightness", default = 5): brightness,
     vol.Optional("sleep_temperature", default = 2000): colour_temp,
     vol.Optional("transition", default = 2): cv.positive_int
-})
+}, extra = vol.ALLOW_EXTRA)
 
 PLATFORM_SCHEMA = vol.All(
     vol.Schema({
@@ -58,16 +58,17 @@ PLATFORM_SCHEMA = vol.All(
         vol.Optional("update_interval", default = datetime.timedelta(minutes = 1)): cv.positive_time_period,
         vol.Optional("lights"): vol.Schema([
             vol.Any(
-                # bare entity id or entity with settings on it
+                # bare entity i
                 cv.entity_id,
                 vol.All(
                     vol.Schema({vol.Required(ATTR_ENTITY_ID): cv.entity_id,
-                                vol.Optional("group"): cv.entity_ids}),
+                                vol.Optional("group"): cv.entity_ids}
+                               , extra = vol.ALLOW_EXTRA),
                     settings_schema
                 )
             )
         ])
-    }),
+    } , extra = vol.ALLOW_EXTRA),
     settings_schema # toplevel global settings
 )
 
