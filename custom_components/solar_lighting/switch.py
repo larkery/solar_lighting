@@ -3,6 +3,7 @@
 import asyncio
 import voluptuous as vol
 import datetime
+import logging
 import homeassistant.helpers.config_validation as cv
 import homeassistant.util.dt as dt_util
 from homeassistant.helpers.sun import get_astral_location
