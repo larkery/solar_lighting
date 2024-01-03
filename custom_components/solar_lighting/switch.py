@@ -11,7 +11,7 @@ from homeassistant.components.switch import SwitchEntity
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.util import slugify
 from homeassistant.util.color import color_temperature_kelvin_to_mired
-
+from math import tanh
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
     ATTR_COLOR_TEMP,
