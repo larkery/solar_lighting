@@ -96,6 +96,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
     def __init__(self, hass, config):
         self.hass = hass
         name = config.get("name")
+        self._config = config
+        self._extra_attributes = {}
         self._name = f"Solar Lighting {name}"
         self._entity_id = f"switch.solar_lighting_{slugify(name)}"
         self._sleep_mode = None
@@ -141,12 +143,25 @@ class MainSwitch(SwitchEntity, RestoreEntity):
 
     @property
     def extra_state_attributes(self):
-        return {"manual_brightness": self._manual_brightness}
+        return self._extra_attributes
 
     async def update_lights(self, *args):
         if not(self._state): return
         sunrise, noon, sunset, now = get_times(self.hass)
 
+        self._extra_attributes[ATTR_BRIGHTNESS] = \
+            evaluate_curve(now, sunrise, noon, sunset,
+                           config.get("brightness_k"),
+                           config.get("brightness_x"),
+                           255*config.get("brightness_min")/100,
+                           255*config.get("brightness_max")/100)
+        self._extra_attributes[ATTR_COLOR_TEMP] = \
+            evaluate_curve(now, sunrise, noon, sunset,
+                           config.get("temperature_k"),
+                           config.get("temperature_x"),
+                           config.get("temperature_min"),
+                           config.get("temperature_max"))
+        
         target_state = {}
         needs_update = set()
 
