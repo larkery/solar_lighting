@@ -489,8 +489,9 @@ def evaluate_curve(now, sunrise, noon, sunset, k, x, minimum, maximum):
     return int(minimum + (maximum - minimum) * x)
 
 def all_equal(xs):
-    if xs:
-        x0 = xs[0]
-        for x in xs:
-            if x != x0: return False
+    first = True
+    x0 = None
+    for x in xs:
+        if first: x0 = x
+        elif x != x0: return False
     return True
