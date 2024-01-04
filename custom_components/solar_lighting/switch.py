@@ -54,10 +54,10 @@ settings_schema = vol.Schema({
     vol.Optional("temperature_adjust", default = True): cv.boolean,
     vol.Optional("temperature_min", default = 2500): color_temp,
     vol.Optional("temperature_max", default = 5500): color_temp,
-    vol.Optional("brightness_k", default = 1.0): float,
+    vol.Optional("brightness_k", default = 30.0): float,
     vol.Optional("brightness_x", default = 0.0): float,
-    vol.Optional("temperature_k", default = 0.5): float,
-    vol.Optional("temperature_x", default = 0.5): float,
+    vol.Optional("temperature_k", default = 22.0): float,
+    vol.Optional("temperature_x", default = 0.04): float,
     vol.Optional("sleep_brightness"): brightness,
     vol.Optional("sleep_temperature"): color_temp,
     vol.Optional("transition", default = 2): cv.positive_int
@@ -534,3 +534,5 @@ def all_equal(xs):
         if first: x0 = x
         elif x != x0: return False
     return True
+
+# (0.6062500000000001, 0.34375, 0.5097222222222222, 0.6763888888888889),
