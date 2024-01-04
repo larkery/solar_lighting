@@ -305,7 +305,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         )
             
     async def async_added_to_hass(self):
-        self.on_remove(
+        self.async_on_remove(
             setup_service_call_interceptor(
                 self.hass,
                 LIGHT_DOMAIN,
@@ -314,7 +314,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             )
         )
 
-        self.on_remove(
+        self.async_on_remove(
             setup_service_call_interceptor(
                 self.hass,
                 LIGHT_DOMAIN,
