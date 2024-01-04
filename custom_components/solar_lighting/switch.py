@@ -6,6 +6,7 @@ import datetime
 import logging
 import homeassistant.helpers.config_validation as cv
 import homeassistant.util.dt as dt_util
+from homeassistant.core import Context
 from homeassistant.helpers.sun import get_astral_location
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.components.switch import SwitchEntity
@@ -132,9 +133,13 @@ def setup_platform(hass, config, add_devices, discovery_info = None):
         add_devices( [ main_switch ] )
     return True
 
+switch_count = 0
+
 class MainSwitch(SwitchEntity, RestoreEntity):
     def __init__(self, hass, config):
         self.hass = hass
+        self._context = Context(id = f"solar_lighting_{switch_count}")
+        switch_count = switch_count + 1
         name = config.get("name")
         self._config = config
         self._extra_attributes = {}
@@ -316,7 +321,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 turn_ons.append(
                     self.hass.async_create_task(
                         self.hass.services.async_call(
-                            LIGHT_DOMAIN, SERVICE_TURN_ON, state
+                            LIGHT_DOMAIN, SERVICE_TURN_ON, state, context=self._context
                         )
                     )
                 )
@@ -329,7 +334,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 turn_ons.append(
                     self.hass.async_create_task(
                         self.hass.services.async_call(
-                            LIGHT_DOMAIN, SERVICE_TURN_ON, state
+                            LIGHT_DOMAIN, SERVICE_TURN_ON, state, context=self._context
                         )
                     )
                 )
@@ -386,6 +391,9 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         await self.update_lights()
         
     async def _intercept_service_call(self, call, data):
+        if not(self._state):
+            return
+        
         if call.context:
             _LOGGER.info("intercept context %s", call.context.id)
         
