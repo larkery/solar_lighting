@@ -304,10 +304,12 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 # split it up because tradfri-eee don't like it
                 brightness_only = state.copy()
                 del brightness_only[ATTR_COLOR_TEMP]
+                del state[ATTR_BRIGHTNESS]
+                
                 transition = brightness_only[ATTR_TRANSITION] / 2
                 brightness_only[ATTR_TRANSITION] = transition
                 state[ATTR_TRANSITION] = transition
-                del state[ATTR_BRIGHTNESS]
+
                 turn_ons.append(
                     self.hass.async_create_task(
                         self.hass.services.async_call(
@@ -332,7 +334,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             await asyncio.wait(turn_ons)
 
     async def async_wait_to_turn_on(self, state):
-        await asyncio.sleep(state[ATTR_TRANSITION])
+        await asyncio.sleep(0.5+state[ATTR_TRANSITION])
         await self.hass.services.async_call(
             LIGHT_DOMAIN, SERVICE_TURN_ON, state
         )
