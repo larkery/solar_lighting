@@ -229,16 +229,12 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 brightness_delta = light.get("brightness_update_delta")
                 temperature_delta = light.get("temperature_update_delta")
 
-                _LOGGER.info(
-                    "Check for manual control: %s %s %s %s",
-                    cur_brightness, ex_brightness,
-                    cur_temperature, ex_temperature
-                )
-                
                 if cur_brightness and abs(ex_brightness - cur_brightness) > brightness_delta:
                     self._manual_brightness.add(entity_id)
+                    _LOGGER.info("%s to manual brightness", entity_id)
                 if cur_temperature and abs(ex_temperature - cur_temperature) > temperature_delta:
                     self._manual_temperature.add(entity_id)
+                    _LOGGER.info("%s to manual temperature", entity_id)
                 
                 if entity_id not in self._manual_brightness and light.get("brightness_adjust"):
                     brightness = evaluate_brightness(self._sleep_mode, times, light)
@@ -397,7 +393,9 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 light = self._lights_by_id[entity]
                 tgt = {}
                 if control_brightness:
-                    self._manual_brightness.add(entity)
+                    self._manual_brightness.update(
+                        light.get("group", [entity])
+                    )
                 elif is_on:
                     pass
                 else:
@@ -405,7 +403,9 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                                                                times,
                                                                light)
                 if control_temperature:
-                    self._manual_temperature.add(entity)
+                    self._manual_temperature.update(
+                        light.get("group", [entity])
+                    )
                 elif is_on:
                     pass
                 else:
