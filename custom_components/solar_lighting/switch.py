@@ -152,24 +152,25 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 tmax = light.get("temperature_max")
                 tmin = light.get("temperature_min")
                 tp = 100 / abs(tmax - tmin)
-                tp_mired = 100 / abs(color_temperature_kelvin_to_mired(tmin) - color_temperature_kelvin_to_mired(tmax))
                 
                 update = {}
                 cur_brightness = state.attributes.get(ATTR_BRIGHTNESS)
                 cur_temperature = state.attributes.get(ATTR_COLOR_TEMP)
+                if cur_temperature:
+                    # we do temperature in kelvin but we talk to HA about mired, so invert
+                    cur_temperature = color_temperature_mired_to_kelvin(cur_temperature)
                 
                 ex_brightness = self._expected_brightness.get(entity_id, cur_brightness)
                 ex_temperature = self._expected_temperature.get(entity_id, cur_temperature)
                 
                 delta = light.get("update_delta")
 
-                if abs(ex_brightness - cur_brightness) > delta:
+                if cur_brightness and abs(ex_brightness - cur_brightness) > delta:
                     self._manual_brightness.add(entity_id)
-                if abs(ex_temperature - cur_temperature) * tp_mired > delta:
+                if cur_temperature and abs(ex_temperature - cur_temperature) * tp > delta:
                     self._manual_temperature.add(entity_id)
                 
-                if entity_id not in self._manual_brightness and \
-                   light.get("brightness_adjust"):
+                if entity_id not in self._manual_brightness and light.get("brightness_adjust"):
                     if self._sleep_mode:
                         brightness = 255*self._sleep_brightness/100
                     else:
@@ -179,12 +180,10 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                                                     255*light.get("brightness_min")/100,
                                                     255*light.get("brightness_max")/100)
                     update[ATTR_BRIGHTNESS] = brightness
-                    cur = state.attributes.get(ATTR_BRIGHTNESS, None)
-                    if not(cur) or abs(cur - brightness) > delta:
+                    if not(cur_brightness) or abs(cur_brightness - brightness) > delta:
                         needs_update.add(entity_id)
 
-                if entity_id not in self._manual_temperature and \
-                   light.get("temperature_adjust"):
+                if entity_id not in self._manual_temperature and light.get("temperature_adjust"):
                     if self._sleep_mode:
                         temperature = self._sleep_temperature
                     else:
@@ -192,11 +191,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                                                      light.get("temperature_k"),
                                                      light.get("temperature_x"),
                                                      tmin, tmax)
-                    update[ATTR_COLOR_TEMP] = color_temperature_kelvin_to_mired(temperature)
-                    cur = state.attributes.get(ATTR_COLOR_TEMP, None)
-                    if cur:
-                        cur = color_temperature_mired_to_kelvin(cur)
-                    if not(cur) or abs(cur - temperature) * tp > delta:
+                    update[ATTR_COLOR_TEMP] = temperature
+                    if not(cur_temperature) or abs(cur_temperature - temperature) * tp > delta:
                         needs_update.add(entity_id)
 
                 if entity_id in needs_update:
@@ -210,14 +206,14 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         
         _LOGGER.warning("Before grouping: %s", target_state)
 
-        ## expectations set for individual lights not groups
-        ## does this make sense?
         for (entity_id, state) in target_state.items():
             if entity_id in needs_update:
                 if ATTR_BRIGHTNESS in state:
                     self._expected_brightness[entity_id] = state[ATTR_BRIGHTNESS]
                 if ATTR_COLOR_TEMP in state:
                     self._expected_temperature[entity_id] = state[ATTR_COLOR_TEMP]
+            # everything past this point works in mired, not kelvin
+            state[ATTR_COLOR_TEMP] = color_temperature_kelvin_to_mired(state[ATTR_COLOR_TEMP])
         
         # Process groups. Nested groups are not handled.
         for group in self._groups:
@@ -236,7 +232,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                         target_state.pop(e, None)
                     if targets[0]:
                         target_state[group.get(ATTR_ENTITY_ID)] = targets[0]
-
 
         _LOGGER.warning("After grouping: %s", target_state)
 
