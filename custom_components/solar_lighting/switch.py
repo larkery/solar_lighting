@@ -370,7 +370,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             target_values = list(target_state.values())
             if all_equal(target_values):
                 value = target_values[0]
-                _LOGGER.warning("easy adaptation! %s", value)
+                _LOGGER.warning("Adapt to %s", value)
                 if ATTR_COLOR_TEMP in value:
                     params[ATTR_COLOR_TEMP] = value[ATTR_COLOR_TEMP]
                     ex = color_temperature_mired_to_kelvin(value[ATTR_COLOR_TEMP])
