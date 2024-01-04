@@ -43,7 +43,7 @@ from .hass_utils import setup_service_call_interceptor
 
 _LOGGER = logging.getLogger(__name__)
 
-brightness = vol.All( vol.Coerce(int), vol.Range(min=1, max=100) )
+brightness = vol.All( vol.Coerce(int), vol.Range(min=1, max=255) )
 color_temp = vol.All( vol.Coerce(int), vol.Range(min=1000, max=10000) )
 
 settings_schema = vol.Schema({
