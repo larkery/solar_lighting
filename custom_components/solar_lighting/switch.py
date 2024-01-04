@@ -235,7 +235,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 brightness_delta = light.get("brightness_update_delta")
                 temperature_delta = light.get("temperature_update_delta")
 
-                cmodes = state.attributes.get(ATTR_COLOR_MODE)
+                cmode = state.attributes.get(ATTR_COLOR_MODE)
 
                 if cmode == ColorMode.BRIGHTNESS:
                     supports_brightness = True
