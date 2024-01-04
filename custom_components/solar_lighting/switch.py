@@ -282,7 +282,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             await asyncio.wait(turn_ons)
 
     async def async_wait_to_turn_on(self, state):
-        asyncio.sleep(state[ATTR_TRANSITION])
+        await asyncio.sleep(state[ATTR_TRANSITION])
         await self.hass.services.async_call(
             LIGHT_DOMAIN, SERVICE_TURN_ON, state
         )
