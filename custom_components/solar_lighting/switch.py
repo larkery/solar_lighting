@@ -250,7 +250,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     if targets[0]:
                         target_state[group.get(ATTR_ENTITY_ID)] = targets[0]
 
-        _LOGGER.warning("After grouping: %s", target_state)
+        _LOGGER.debug("After grouping: %s", target_state)
 
         turn_ons = []
         for (entity_id, state) in target_state.items():
@@ -370,7 +370,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             target_values = list(target_state.values())
             if all_equal(target_values):
                 value = target_values[0]
-                _LOGGER.warning("Adapt to %s", value)
+                _LOGGER.debug("Adapt to %s", value)
                 if ATTR_COLOR_TEMP in value:
                     params[ATTR_COLOR_TEMP] = value[ATTR_COLOR_TEMP]
                     ex = color_temperature_mired_to_kelvin(value[ATTR_COLOR_TEMP])
