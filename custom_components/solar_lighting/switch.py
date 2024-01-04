@@ -340,6 +340,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         self._state = state and state.state == STATE_ON
 
     async def _intercept_service_call(self, call, data):
+        _LOGGER.warning("intercept:%s", data)
         entities = data.get(ATTR_ENTITY_ID)
         targets_my_entity = False
         targets_other_entity = False
@@ -408,6 +409,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 _LOGGER.warning("divergent values %s", target_state)
         elif target_state:
             _LOGGER.warning("call covers other entities, fail")
+
             
     async def async_set_sleep_mode(self, sleep_mode):
         if self._sleep_mode != sleep_mode:
