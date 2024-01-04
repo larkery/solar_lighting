@@ -23,6 +23,8 @@ from homeassistant.components.light import (
     ATTR_RGB_COLOR,
     ATTR_TRANSITION,
     ATTR_XY_COLOR,
+    ATTR_COLOR_MODE,
+    ColorMode,
 )
 
 from homeassistant.const import (
@@ -233,6 +235,18 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 brightness_delta = light.get("brightness_update_delta")
                 temperature_delta = light.get("temperature_update_delta")
 
+                cmodes = state.attributes.get(ATTR_COLOR_MODE)
+
+                if cmode == ColorMode.BRIGHTNESS:
+                    supports_brightness = True
+                    supports_temperature = False
+                elif cmode = ColorMode.ONOFF:
+                    supports_brightness = False
+                    supports_temperature = False
+                else:
+                    supports_brightness = True
+                    supports_temperature = True
+                
                 if cur_brightness and abs(ex_brightness - cur_brightness) > brightness_delta:
                     self.set_manual_brightness(entity_id)
                     
@@ -244,14 +258,16 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     update[ATTR_BRIGHTNESS] = brightness
                     if not(cur_brightness) or abs(cur_brightness - brightness) > brightness_delta:
                         _LOGGER.info("%s needs brightness update", entity_id)
-                        needs_update.add(entity_id)
+                        if supports_brightness:
+                            needs_update.add(entity_id)
 
                 if entity_id not in self._manual_temperature and light.get("temperature_adjust"):
                     temperature = evaluate_temperature(self._sleep_mode, times, light)
                     update[ATTR_COLOR_TEMP] = temperature
                     if not(cur_temperature) or abs(cur_temperature - temperature) > temperature_delta:
                         _LOGGER.info("%s needs temperature update", entity_id)
-                        needs_update.add(entity_id)
+                        if supports_temperature:
+                            needs_update.add(entity_id)
 
                 if entity_id in needs_update:
                     update[ATTR_TRANSITION] = light.get("transition", 0)
