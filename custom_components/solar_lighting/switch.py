@@ -11,7 +11,10 @@ from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.util import slugify
-from homeassistant.util.color import color_temperature_kelvin_to_mired
+from homeassistant.util.color import (
+    color_temperature_kelvin_to_mired,
+    color_temperature_mired_to_kelvin,
+)
 from math import tanh
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
@@ -240,17 +243,46 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         turn_ons = []
         for (entity_id, state) in target_state.items():
             state[ATTR_ENTITY_ID] = entity_id
-            _LOGGER.warning("Service call: %s", state)
-            turn_ons.append(
-                self.hass.async_create_task(
-                    self.hass.services.async_call(
-                        LIGHT_DOMAIN, SERVICE_TURN_ON, state
+            if ATTR_TRANSITION in state \
+               and state[ATTR_TRANSITION] > 0 \
+               and ATTR_BRIGHTNESS in state \
+               and ATTR_COLOR_TEMP in state:
+                # split it up because tradfri-eee don't like it
+                brightness_only = state.copy()
+                del brightness_only[ATTR_COLOR_TEMP]
+                transition = brightness_only[ATTR_TRANSITION] / 2
+                brightness_only[ATTR_TRANSITION] = transition
+                state[ATTR_TRANSITION] = transition
+                del state[ATTR_BRIGHTNESS]
+                turn_ons.append(
+                    self.hass.async_create_task(
+                        self.hass.services.async_call(
+                            LIGHT_DOMAIN, SERVICE_TURN_ON, state
+                        )
                     )
                 )
-            )
+                turn_ons.append(
+                    self.hass.async_create_task(
+                        self.async_wait_to_turn_on( brightness_only )
+                    )
+                )
+            else:
+                turn_ons.append(
+                    self.hass.async_create_task(
+                        self.hass.services.async_call(
+                            LIGHT_DOMAIN, SERVICE_TURN_ON, state
+                        )
+                    )
+                )
         if turn_ons:
             await asyncio.wait(turn_ons)
 
+    async def async_wait_to_turn_on(self, state):
+        asyncio.sleep(state[ATTR_TRANSITION])
+        await self.hass.services.async_call(
+            LIGHT_DOMAIN, SERVICE_TURN_ON, state
+        )
+            
     async def async_added_to_hass(self):
         self.async_on_remove(
             async_track_time_interval(self.hass, self.update_lights, self._update_interval)
