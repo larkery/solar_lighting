@@ -119,7 +119,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 light = {**config, ATTR_ENTITY_ID: light}
             else:
                 light = {**config, **light}
-
+            _LOGGER.debug("light config: %s", light)
             if "sleep_brightness" not in light:
                 light["sleep_brightness"] = light.get("brightness_min")
             if "sleep_temperature" not in light:
