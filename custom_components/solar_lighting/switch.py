@@ -28,7 +28,7 @@ from homeassistant.const import (
     ATTR_ENTITY_ID,
     CONF_NAME,
     CONF_PLATFORM,
-    SERVICE_TURN_ON,
+    SERVICE_TURN_ON, SERVICE_TOGGLE,
     STATE_ON,
 )
 
