@@ -543,7 +543,9 @@ def all_equal(xs):
     first = True
     x0 = None
     for x in xs:
-        if first: x0 = x
+        if first:
+            x0 = x
+            first = False
         elif x != x0: return False
     return True
 
