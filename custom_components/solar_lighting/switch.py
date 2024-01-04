@@ -420,7 +420,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 light = self._lights_by_id[entity]
                 if light.get("turn_on_twice"):
                     turn_on_twice.append(entity)
-                for child in entity.get("group", []):
+                for child in light.get("group", []):
                     if self._lights_by_id.get(child,{}).get("turn_on_twice"):
                         turn_on_twice.append(child)
                 
