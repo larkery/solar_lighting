@@ -286,7 +286,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     if targets[0]:
                         target_state[group.get(ATTR_ENTITY_ID)] = targets[0]
 
-        _LOGGER.info("After grouping: %s", target_state)
+        if target_state:
+            _LOGGER.info("After grouping: %s", target_state)
 
         turn_ons = []
         for (entity_id, state) in target_state.items():
