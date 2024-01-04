@@ -467,10 +467,12 @@ class MainSwitch(SwitchEntity, RestoreEntity):
 
                 if turn_on_twice:
                     _LOGGER.info("double turn-on: %s", turn_on_twice)
-                    await asyncio.wait(
-                        [self.hass.async_create_task(
-                            self.hass.services.async_call( call.domain, call.service, {ATTR_ENTITY_ID: e}, context=self.context ) )
-                         for e in turn_on_twice]
+                    await self.hass.services.async_call(
+                        LIGHT_DOMAIN,
+                        call.service,
+                        {ATTR_ENTITY_ID: turn_on_twice},
+                        blocking=True,
+                        context=self.context,
                     )
 
             else:
