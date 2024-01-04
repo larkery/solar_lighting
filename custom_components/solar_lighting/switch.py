@@ -366,6 +366,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         state = await self.async_get_last_state()
         self._state = state and state.state == STATE_ON
 
+        await self.update_lights()
+        
     async def _intercept_service_call(self, call, data):
         entities = data.get(ATTR_ENTITY_ID)
         params = data["params"]
