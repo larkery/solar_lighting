@@ -279,8 +279,10 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     break
 
             if member_needs_update:
-                _LOGGER.info("Maybe update group %s", group.get(ATTR_ENTITY_ID))
                 targets = [target_state.get(e, None) for e in members]
+                _LOGGER.info("Maybe update group %s %s %s", group.get(ATTR_ENTITY_ID),
+                             members, targets)
+
                 if all_equal(targets):
                     # remove from target_state
                     _LOGGER.info("Target state for group %s is consistent at %s",
