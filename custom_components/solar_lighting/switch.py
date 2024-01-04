@@ -49,8 +49,8 @@ color_temp = vol.All( vol.Coerce(int), vol.Range(min=1000, max=10000) )
 settings_schema = vol.Schema({
     vol.Optional("update_delta", default=2): cv.positive_int,
     vol.Optional("brightness_adjust", default = True): cv.boolean,
-    vol.Optional("brightness_min", default=5): brightness,
-    vol.Optional("brightness_max", default=100): brightness,
+    vol.Optional("brightness_min", default=25): brightness,
+    vol.Optional("brightness_max", default=255): brightness,
     vol.Optional("temperature_adjust", default = True): cv.boolean,
     vol.Optional("temperature_min", default = 2500): color_temp,
     vol.Optional("temperature_max", default = 5500): color_temp,
@@ -164,8 +164,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             evaluate_curve(now, sunrise, noon, sunset,
                            self._config.get("brightness_k"),
                            self._config.get("brightness_x"),
-                           255*self._config.get("brightness_min")/100,
-                           255*self._config.get("brightness_max")/100)
+                           self._config.get("brightness_min"),
+                           self._config.get("brightness_max"))
         self._extra_attributes[ATTR_COLOR_TEMP] = \
             evaluate_curve(now, sunrise, noon, sunset,
                            self._config.get("temperature_k"),
@@ -204,13 +204,13 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 
                 if entity_id not in self._manual_brightness and light.get("brightness_adjust"):
                     if self._sleep_mode:
-                        brightness = 255*light.get("sleep_brightness", light.get("brightness_min"))/100
+                        brightness = light.get("sleep_brightness", light.get("brightness_min"))
                     else:
                         brightness = evaluate_curve(now, sunrise, noon, sunset,
                                                     light.get("brightness_k"),
                                                     light.get("brightness_x"),
-                                                    255*light.get("brightness_min")/100,
-                                                    255*light.get("brightness_max")/100)
+                                                    light.get("brightness_min"),
+                                                    light.get("brightness_max"))
                     update[ATTR_BRIGHTNESS] = brightness
                     if not(cur_brightness) or abs(cur_brightness - brightness) > delta:
                         needs_update.add(entity_id)
@@ -364,13 +364,13 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 elif is_on:
                     pass
                 elif self._sleep_mode:
-                    tgt[ATTR_BRIGHTNESS] = 255*light.get("sleep_brightness")/100
+                    tgt[ATTR_BRIGHTNESS] = light.get("sleep_brightness")
                 else:
                     tgt[ATTR_BRIGHTNESS] = evaluate_curve(now, sunrise, noon, sunset,
                                                           light.get("brightness_k"),
                                                           light.get("brightness_x"),
-                                                          255*light.get("brightness_min")/100,
-                                                          255*light.get("brightness_max")/100)
+                                                          light.get("brightness_min"),
+                                                          light.get("brightness_max"))
                 if control_temperature:
                     self._manual_temperature.add(entity)
                 elif is_on:
