@@ -155,10 +155,10 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 light = {**common_config, ATTR_ENTITY_ID: light}
             else:
                 light = {**common_config, **light}
-            _LOGGER.debug("light config: %s", light)
-            if "sleep_brightness" not in light:
+
+            if not(light.get("sleep_brightness")):
                 light["sleep_brightness"] = light.get("brightness_min")
-            if "sleep_temperature" not in light:
+            if not(light.get("sleep_temperature")):
                 light["sleep_temperature"] = light.get("temperature_min")
             
             if light.get("group"):
@@ -286,7 +286,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     if targets[0]:
                         target_state[group.get(ATTR_ENTITY_ID)] = targets[0]
 
-        _LOGGER.debug("After grouping: %s", target_state)
+        _LOGGER.info("After grouping: %s", target_state)
 
         turn_ons = []
         for (entity_id, state) in target_state.items():
@@ -406,7 +406,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             target_values = list(target_state.values())
             if all_equal(target_values):
                 value = target_values[0]
-                _LOGGER.debug("Adapt to %s", value)
+                _LOGGER.info("Adapt to %s", value)
                 if ATTR_COLOR_TEMP in value:
                     params[ATTR_COLOR_TEMP] = value[ATTR_COLOR_TEMP]
                     ex = color_temperature_mired_to_kelvin(value[ATTR_COLOR_TEMP])
