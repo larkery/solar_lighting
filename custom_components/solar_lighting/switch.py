@@ -347,7 +347,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         times = None
         for entity in entities:
             if entity in self._lights_by_id:
-                cur_state = self.hass.states.get(entity_id)
+                cur_state = self.hass.states.get(entity)
                 is_on = cur_state and cur_state.state == STATE_ON
 
                 if not(self._sleep_mode):
