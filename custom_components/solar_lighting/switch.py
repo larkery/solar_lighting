@@ -372,7 +372,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     self._manual_temperature.add(entity)
                 elif is_on:
                     pass
-                elif self.sleep_mode:
+                elif self._sleep_mode:
                     tgt[ATTR_COLOR_TEMP] = light.get("sleep_temperature")
                 else:
                     tgt[ATTR_COLOR_TEMP] = color_temperature_kelvin_to_mired(
