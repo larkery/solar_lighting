@@ -387,7 +387,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         
     async def _intercept_service_call(self, call, data):
         if call.context:
-            _LOGGER.info("intercept context %s" call.context.id)
+            _LOGGER.info("intercept context %s", call.context.id)
         
         entities = data.get(ATTR_ENTITY_ID)
         params = data["params"]
