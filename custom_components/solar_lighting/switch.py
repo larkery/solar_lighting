@@ -229,6 +229,12 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 brightness_delta = light.get("brightness_update_delta")
                 temperature_delta = light.get("temperature_update_delta")
 
+                _LOGGER.info(
+                    "Check for manual control: %s %s %s %s",
+                    cur_brightness, ex_brightness,
+                    cur_temperature, ex_temperature
+                )
+                
                 if cur_brightness and abs(ex_brightness - cur_brightness) > brightness_delta:
                     self._manual_brightness.add(entity_id)
                 if cur_temperature and abs(ex_temperature - cur_temperature) > temperature_delta:
@@ -375,8 +381,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         params = data["params"]
         targets_my_entity = False
         targets_other_entity = False
-        control_brightness = ATTR_BRIGHTNESS in data
-        control_temperature = ATTR_COLOR_TEMP in data
+        control_brightness = ATTR_BRIGHTNESS in params
+        control_temperature = ATTR_COLOR_TEMP in params
         target_state = {}
         times = None
         for entity in entities:
@@ -548,5 +554,3 @@ def all_equal(xs):
             first = False
         elif x != x0: return False
     return True
-
-# (0.6062500000000001, 0.34375, 0.5097222222222222, 0.6763888888888889),
