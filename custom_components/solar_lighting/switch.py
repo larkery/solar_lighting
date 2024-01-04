@@ -114,7 +114,8 @@ PLATFORM_SCHEMA = vol.All(
                 cv.entity_id,
                 vol.All(
                     vol.Schema({vol.Required(ATTR_ENTITY_ID): cv.entity_id,
-                                vol.Optional("group"): cv.entity_ids}
+                                vol.Optional("group"): cv.entity_ids,
+                                vol.Optional("turn_on_twice", default = False): cv.boolean}
                                , extra = vol.ALLOW_EXTRA),
                     settings_schema_no_defaults
                 )
@@ -392,6 +393,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         if not(self._state):
             return
 
+        # annoyingly there is no way to walk the chain of parents
         if call.context == self.context:
             return
         
@@ -403,6 +405,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         control_temperature = ATTR_COLOR_TEMP in params
         target_state = {}
         times = None
+        turn_on_twice = False
         for entity in entities:
             if entity in self._lights_by_id:
                 cur_state = self.hass.states.get(entity)
@@ -413,6 +416,9 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     sunrise, noon, sunset, now = times
                 
                 light = self._lights_by_id[entity]
+                if light.get("turn_on_twice"):
+                    turn_on_twice = True
+                
                 tgt = {}
                 if control_brightness:
                     self.set_manual_brightness(entity)
@@ -443,6 +449,13 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             if all_equal(target_values):
                 value = target_values[0]
                 _LOGGER.info("Adapt to %s", value)
+                if turn_on_twice:
+                    await self.hass.async_create_task(
+                        self.hass.services.async_call(
+                            LIGHT_DOMAIN, call, params.copy(), context=self.context
+                        )
+                    )
+                
                 if ATTR_COLOR_TEMP in value:
                     params[ATTR_COLOR_TEMP] = value[ATTR_COLOR_TEMP]
                     ex = color_temperature_mired_to_kelvin(value[ATTR_COLOR_TEMP])
