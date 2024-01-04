@@ -257,7 +257,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     brightness = evaluate_brightness(self._sleep_mode, times, light)
                     update[ATTR_BRIGHTNESS] = brightness
                     if not(cur_brightness) or abs(cur_brightness - brightness) > brightness_delta:
-                        _LOGGER.info("%s needs brightness update", entity_id)
                         if supports_brightness:
                             needs_update.add(entity_id)
 
@@ -265,7 +264,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     temperature = evaluate_temperature(self._sleep_mode, times, light)
                     update[ATTR_COLOR_TEMP] = temperature
                     if not(cur_temperature) or abs(cur_temperature - temperature) > temperature_delta:
-                        _LOGGER.info("%s needs temperature update", entity_id)
                         if supports_temperature:
                             needs_update.add(entity_id)
 
