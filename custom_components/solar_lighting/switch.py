@@ -340,8 +340,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         self._state = state and state.state == STATE_ON
 
     async def _intercept_service_call(self, call, data):
-        _LOGGER.warning("intercept:%s", data)
         entities = data.get(ATTR_ENTITY_ID)
+        params = data["params"]
         targets_my_entity = False
         targets_other_entity = False
         control_brightness = ATTR_BRIGHTNESS in data
@@ -397,12 +397,12 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 value = target_values[0]
                 _LOGGER.warning("easy adaptation! %s", value)
                 if ATTR_COLOR_TEMP in value:
-                    data[ATTR_COLOR_TEMP] = value[ATTR_COLOR_TEMP]
+                    params[ATTR_COLOR_TEMP] = value[ATTR_COLOR_TEMP]
                     ex = color_temperature_mired_to_kelvin(value[ATTR_COLOR_TEMP])
                     for eid in target_state:
                         self._expected_temperature[eid] = ex
                 if ATTR_BRIGHTNESS in value:
-                    data[ATTR_BRIGHTNESS] = value[ATTR_BRIGHTNESS]
+                    params[ATTR_BRIGHTNESS] = value[ATTR_BRIGHTNESS]
                     for eid in target_state:
                         self._expected_brightness[eid] = value[ATTR_BRIGHTNESS]
             else:
