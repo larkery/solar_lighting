@@ -133,13 +133,13 @@ def setup_platform(hass, config, add_devices, discovery_info = None):
         add_devices( [ main_switch ] )
     return True
 
-switch_count = 0
-
 class MainSwitch(SwitchEntity, RestoreEntity):
+    switch_count = 0
+    
     def __init__(self, hass, config):
         self.hass = hass
-        self._context = Context(id = f"solar_lighting_{switch_count}")
-        switch_count = switch_count + 1
+        self._context = Context(id = f"solar_lighting_{MainSwitch.switch_count}")
+        MainSwitch.switch_count = MainSwitch.switch_count + 1
         name = config.get("name")
         self._config = config
         self._extra_attributes = {}
