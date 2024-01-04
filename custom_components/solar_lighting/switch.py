@@ -452,7 +452,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 if turn_on_twice:
                     await self.hass.async_create_task(
                         self.hass.services.async_call(
-                            call.domain, call.service, params.copy(), context=self.context
+                            call.domain, call.service, {ATTR_ENTITY_ID: entities},
+                            context=self.context
                         )
                     )
                 
