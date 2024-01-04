@@ -230,11 +230,10 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 temperature_delta = light.get("temperature_update_delta")
 
                 if cur_brightness and abs(ex_brightness - cur_brightness) > brightness_delta:
-                    self._manual_brightness.add(entity_id)
-                    _LOGGER.info("%s to manual brightness", entity_id)
+                    self.set_manual_brightness(entity_id)
+                    
                 if cur_temperature and abs(ex_temperature - cur_temperature) > temperature_delta:
-                    self._manual_temperature.add(entity_id)
-                    _LOGGER.info("%s to manual temperature", entity_id)
+                    self.set_manual_temperature(entity_id)
                 
                 if entity_id not in self._manual_brightness and light.get("brightness_adjust"):
                     brightness = evaluate_brightness(self._sleep_mode, times, light)
@@ -337,6 +336,20 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         if turn_ons:
             await asyncio.wait(turn_ons)
 
+    def set_manual_brightness(self, entity_id):
+        if entity_id not in self._manual_brightness:
+            _LOGGER.info("%s -> manual brightness", entity_id)
+            self._manual_brightness.update(
+                self._lights_by_id.get(entity_id, {}).get("group", [entity_id])
+            )
+
+    def set_manual_temperature(self, entity_id):
+        if entity_id not in self._manual_temperature:
+            _LOGGER.info("%s -> manual temperature", entity_id)
+            self._manual_temperature.update(
+                self._lights_by_id.get(entity_id, {}).get("group", [entity_id])
+            )
+            
     async def async_wait_to_turn_on(self, state):
         await asyncio.sleep(0.5+state[ATTR_TRANSITION])
         await self.hass.services.async_call(
@@ -393,9 +406,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 light = self._lights_by_id[entity]
                 tgt = {}
                 if control_brightness:
-                    self._manual_brightness.update(
-                        light.get("group", [entity])
-                    )
+                    self.set_manual_brightness(entity)
                 elif is_on:
                     pass
                 else:
@@ -403,9 +414,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                                                                times,
                                                                light)
                 if control_temperature:
-                    self._manual_temperature.update(
-                        light.get("group", [entity])
-                    )
+                    self.set_manual_temperature(entity)
                 elif is_on:
                     pass
                 else:
