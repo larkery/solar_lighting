@@ -134,9 +134,10 @@ def setup_platform(hass, config, add_devices, discovery_info = None):
     return True
 
 class MainSwitch(SwitchEntity, RestoreEntity):
+    context = Context()
+    
     def __init__(self, hass, config):
         self.hass = hass
-        self._context = Context()
         name = config.get("name")
         self._config = config
         self._extra_attributes = {}
@@ -318,7 +319,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 turn_ons.append(
                     self.hass.async_create_task(
                         self.hass.services.async_call(
-                            LIGHT_DOMAIN, SERVICE_TURN_ON, state, context=self._context
+                            LIGHT_DOMAIN, SERVICE_TURN_ON, state, context=self.context
                         )
                     )
                 )
@@ -331,7 +332,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 turn_ons.append(
                     self.hass.async_create_task(
                         self.hass.services.async_call(
-                            LIGHT_DOMAIN, SERVICE_TURN_ON, state, context=self._context
+                            LIGHT_DOMAIN, SERVICE_TURN_ON, state, context=self.context
                         )
                     )
                 )
@@ -390,9 +391,10 @@ class MainSwitch(SwitchEntity, RestoreEntity):
     async def _intercept_service_call(self, call, data):
         if not(self._state):
             return
-        
-        if call.context:
-            _LOGGER.info("intercept context %s <> ", call.context.id, self._context.id)
+
+        if call.context == self.context:
+            _LOGGER.info("skip own service call")
+            return
         
         entities = data.get(ATTR_ENTITY_ID)
         params = data["params"]
