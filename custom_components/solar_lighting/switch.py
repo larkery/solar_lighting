@@ -469,7 +469,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     _LOGGER.info("double turn-on: %s", turn_on_twice)
                     await self.hass.services.async_call(
                         LIGHT_DOMAIN,
-                        SERVICE_TURN_ON,
+                        call.service,
                         {ATTR_ENTITY_ID: turn_on_twice},
                         blocking=True,
                         context=self.context,
