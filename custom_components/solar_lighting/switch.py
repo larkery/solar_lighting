@@ -33,7 +33,8 @@ from homeassistant.const import (
 )
 
 from homeassistant.helpers.event import (
-    async_track_time_interval
+    async_track_time_interval,
+    async_track_state_change
 )
 
 from . import DOMAIN
@@ -44,7 +45,6 @@ brightness = vol.All( vol.Coerce(int), vol.Range(min=1, max=100) )
 color_temp = vol.All( vol.Coerce(int), vol.Range(min=1000, max=10000) )
 
 settings_schema = vol.Schema({
-    vol.Optional("intercept_turn_on", default=True): cv.boolean,
     vol.Optional("update_delta", default=2): cv.positive_int,
     vol.Optional("brightness_adjust", default = True): cv.boolean,
     vol.Optional("brightness_min", default=5): brightness,
@@ -82,6 +82,10 @@ PLATFORM_SCHEMA = vol.All(
     } , extra = vol.ALLOW_EXTRA),
     settings_schema # toplevel global settings
 )
+
+def setup(hass, config):
+    _LOGGER.warning("setup switch")
+    return True
 
 def setup_platform(hass, config, add_devices, discovery_info = None):
     main_switch = MainSwitch(hass, config)
@@ -306,7 +310,16 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         self.async_on_remove(
             async_track_time_interval(self.hass, self.update_lights, self._update_interval)
         )
-        
+
+        # self.async_on_remove(
+        #     async_track_state_change(
+        #         self.hass,
+        #         [l.get(ATTR_ENTITY_ID) for l in self._lights],
+        #         self.update_lights,
+        #         to_state = ["on", "off"]
+        #     )
+        # )
+
         if self._state is not None: return
         state = await self.async_get_last_state()
         self._state = state and state.state == STATE_ON
