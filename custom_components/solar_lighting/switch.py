@@ -153,8 +153,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
     @property
     def extra_state_attributes(self):
         return {**self._extra_attributes,
-                "manual brightness", self._manual_brightness,
-                "manual temperature", self._manual_temperature}
+                "manual brightness": self._manual_brightness,
+                "manual temperature": self._manual_temperature}
 
     async def update_lights(self, *args):
         if not(self._state): return
