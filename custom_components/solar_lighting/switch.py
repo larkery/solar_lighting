@@ -56,8 +56,8 @@ settings_schema = vol.Schema({
     vol.Optional("brightness_x", default = 0.0): float,
     vol.Optional("temperature_k", default = 0.5): float,
     vol.Optional("temperature_x", default = 0.5): float,
-    vol.Optional("sleep_brightness", default = 5): brightness,
-    vol.Optional("sleep_temperature", default = 2000): color_temp,
+    vol.Optional("sleep_brightness"): brightness,
+    vol.Optional("sleep_temperature"): color_temp,
     vol.Optional("transition", default = 2): cv.positive_int
 }, extra = vol.ALLOW_EXTRA)
 
@@ -66,6 +66,7 @@ PLATFORM_SCHEMA = vol.All(
         vol.Required(CONF_PLATFORM): "solar_lighting",
         vol.Optional(CONF_NAME, default="Solar Lighting"): cv.string,
         vol.Optional("update_interval", default = datetime.timedelta(minutes = 1)): cv.positive_time_period,
+        vol.Optional("sleep", default = True): cv.boolean,
         vol.Optional("lights"): vol.Schema([
             vol.Any(
                 # bare entity i
@@ -84,8 +85,11 @@ PLATFORM_SCHEMA = vol.All(
 
 def setup_platform(hass, config, add_devices, discovery_info = None):
     main_switch = MainSwitch(hass, config)
-    sleep_switch = SleepSwitch(hass, config, main_switch)
-    add_devices( [ main_switch, sleep_switch ] )
+    if config.get("sleep"):
+        sleep_switch = SleepSwitch(hass, config, main_switch)
+        add_devices( [ main_switch, sleep_switch ] )
+    else:
+        add_devices( [ main_switch ] )
     return True
 
 class MainSwitch(SwitchEntity, RestoreEntity):
@@ -104,8 +108,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         
         self._manual_brightness = set()
         self._manual_temperature = set()
-        self._sleep_brightness = config.get("sleep_brightness")
-        self._sleep_temperature = config.get("sleep_temperature")
+        self._sleep_brightness = config.get("sleep_brightness", config.get("brightness_min"))
+        self._sleep_temperature = config.get("sleep_temperature", config.get("temperature_min"))
         
         for light in config.get("lights", []):
             if isinstance(light, str):
@@ -116,6 +120,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 self._groups.append(light)
             else:
                 self._lights.append(light)
+        # when we process groups we want to do biggest ones first
+        self._groups.sort(key = lambda g : len(g.get("group", [])), reverse = True)
 
     @property
     def icon(self):
@@ -215,12 +221,15 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             # everything past this point works in mired, not kelvin
             state[ATTR_COLOR_TEMP] = color_temperature_kelvin_to_mired(state[ATTR_COLOR_TEMP])
         
-        # Process groups. Nested groups are not handled.
+        # Process groups. Nested groups are not handled. If a group is
+        # contained within another group we only want to send command
+        # to the biggest group. We sorted groups by size earlier, so
+        # assuming the groups form a tree with no overlaps this will work.
         for group in self._groups:
             members = group.get("group")
             member_needs_update = False
             for e in members:
-                if e in needs_update:
+                if e in needs_update and e in target_state:
                     member_needs_update = True
                     break
 
