@@ -240,7 +240,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 if cmode == ColorMode.BRIGHTNESS:
                     supports_brightness = True
                     supports_temperature = False
-                elif cmode = ColorMode.ONOFF:
+                elif cmode == ColorMode.ONOFF:
                     supports_brightness = False
                     supports_temperature = False
                 else:
