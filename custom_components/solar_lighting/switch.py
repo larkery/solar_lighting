@@ -84,7 +84,8 @@ settings_schema_no_defaults = vol.Schema({
 
 
 common_keys = [
-    "update_delta",
+    "brightness_update_delta",
+    "temperature_update_delta",
     "brightness_adjust",
     "brightness_min",
     "brightness_max",
