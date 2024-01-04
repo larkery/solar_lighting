@@ -481,7 +481,8 @@ def evaluate_temperature(sleep_mode, times, light):
                               light.get("temperature_min"),
                               light.get("temperature_max"))
 
-def evaluate_curve((now, sunrise, noon, sunset), k, x, minimum, maximum):
+def evaluate_curve(times, k, x, minimum, maximum):
+    now, sunrise, noon, sunset = times
     if now < noon:
         x = (1+tanh(k*(now - (sunrise + x))))/2
     else:
