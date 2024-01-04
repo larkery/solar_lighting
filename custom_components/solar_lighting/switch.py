@@ -389,9 +389,10 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 targets_other_entity = True
 
         if target_state and not(targets_other_entity):
-            if all_equal(target_state.values()):
+            target_values = list(target_state.values())
+            if all_equal(target_values):
                 _LOGGER.warning("easy adaptation! values patched!")
-                value = target_state.values[0]
+                value = target_values[0]
                 if ATTR_COLOR_TEMP in value:
                     data[ATTR_COLOR_TEMP] = value[ATTR_COLOR_TEMP]
                     ex = color_temperature_mired_to_kelvin(value[ATTR_COLOR_TEMP])
