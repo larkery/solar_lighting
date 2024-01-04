@@ -151,16 +151,16 @@ class MainSwitch(SwitchEntity, RestoreEntity):
 
         self._extra_attributes[ATTR_BRIGHTNESS] = \
             evaluate_curve(now, sunrise, noon, sunset,
-                           config.get("brightness_k"),
-                           config.get("brightness_x"),
-                           255*config.get("brightness_min")/100,
-                           255*config.get("brightness_max")/100)
+                           self._config.get("brightness_k"),
+                           self._config.get("brightness_x"),
+                           255*self._config.get("brightness_min")/100,
+                           255*self._config.get("brightness_max")/100)
         self._extra_attributes[ATTR_COLOR_TEMP] = \
             evaluate_curve(now, sunrise, noon, sunset,
-                           config.get("temperature_k"),
-                           config.get("temperature_x"),
-                           config.get("temperature_min"),
-                           config.get("temperature_max"))
+                           self._config.get("temperature_k"),
+                           self._config.get("temperature_x"),
+                           self._config.get("temperature_min"),
+                           self._config.get("temperature_max"))
         
         target_state = {}
         needs_update = set()
