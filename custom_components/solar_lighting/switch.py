@@ -405,7 +405,9 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         control_temperature = ATTR_COLOR_TEMP in params
         target_state = {}
         times = None
-        turn_on_twice = False
+
+        turn_on_twice = []
+        
         for entity in entities:
             if entity in self._lights_by_id:
                 cur_state = self.hass.states.get(entity)
@@ -417,7 +419,10 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 
                 light = self._lights_by_id[entity]
                 if light.get("turn_on_twice"):
-                    turn_on_twice = True
+                    turn_on_twice.append(entity)
+                for child in entity.get("group", []):
+                    if self._lights_by_id.get(child,{}).get("turn_on_twice"):
+                        turn_on_twice.append(child)
                 
                 tgt = {}
                 if control_brightness:
@@ -449,13 +454,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             if all_equal(target_values):
                 value = target_values[0]
                 _LOGGER.info("Adapt to %s", value)
-                if turn_on_twice:
-                    await self.hass.async_create_task(
-                        self.hass.services.async_call(
-                            call.domain, call.service, {ATTR_ENTITY_ID: entities},
-                            context=self.context
-                        )
-                    )
                 
                 if ATTR_COLOR_TEMP in value:
                     params[ATTR_COLOR_TEMP] = value[ATTR_COLOR_TEMP]
@@ -466,6 +464,15 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     params[ATTR_BRIGHTNESS] = value[ATTR_BRIGHTNESS]
                     for eid in target_state:
                         self._expected_brightness[eid] = value[ATTR_BRIGHTNESS]
+
+                if turn_on_twice:
+                    await self.hass.async_create_task(
+                        self.hass.services.async_call(
+                            call.domain, call.service, {ATTR_ENTITY_ID: turn_on_twice},
+                            context=self.context
+                        )
+                    )
+
             else:
                 _LOGGER.warning("divergent values %s", target_state)
         elif target_state:
