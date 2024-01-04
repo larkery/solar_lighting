@@ -63,6 +63,24 @@ settings_schema = vol.Schema({
     vol.Optional("transition", default = 2): cv.positive_int
 }, extra = vol.ALLOW_EXTRA)
 
+settings_schema_no_defaults = vol.Schema({
+    vol.Optional("update_delta"): cv.positive_int,
+    vol.Optional("brightness_adjust"): cv.boolean,
+    vol.Optional("brightness_min"): brightness,
+    vol.Optional("brightness_max"): brightness,
+    vol.Optional("temperature_adjust"): cv.boolean,
+    vol.Optional("temperature_min"): color_temp,
+    vol.Optional("temperature_max"): color_temp,
+    vol.Optional("brightness_k"): float,
+    vol.Optional("brightness_x"): float,
+    vol.Optional("temperature_k"): float,
+    vol.Optional("temperature_x"): float,
+    vol.Optional("sleep_brightness"): brightness,
+    vol.Optional("sleep_temperature"): color_temp,
+    vol.Optional("transition"): cv.positive_int
+}, extra = vol.ALLOW_EXTRA)
+
+
 common_keys = [
     "update_delta",
     "brightness_adjust",
@@ -94,7 +112,7 @@ PLATFORM_SCHEMA = vol.All(
                     vol.Schema({vol.Required(ATTR_ENTITY_ID): cv.entity_id,
                                 vol.Optional("group"): cv.entity_ids}
                                , extra = vol.ALLOW_EXTRA),
-                    settings_schema
+                    settings_schema_no_defaults
                 )
             )
         ])
