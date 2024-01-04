@@ -270,10 +270,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         if target_state:
             _LOGGER.info("Before grouping: %s", target_state)
         
-        # Process groups. Nested groups are not handled. If a group is
-        # contained within another group we only want to send command
-        # to the biggest group. We sorted groups by size earlier, so
-        # assuming the groups form a tree with no overlaps this will work.
         for group in self._groups:
             members = group.get("group")
             member_needs_update = False
@@ -283,9 +279,13 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     break
 
             if member_needs_update:
+                _LOGGER.info("Maybe update group %s", group.get(ATTR_ENTITY_ID))
                 targets = [target_state.get(e, None) for e in members]
                 if all_equal(targets):
                     # remove from target_state
+                    _LOGGER.info("Target state for group %s is consistent at %s",
+                                 group.get(ATTR_ENTITY_ID), targets[0])
+
                     for e in members:
                         target_state.pop(e, None)
                     if targets[0]:
