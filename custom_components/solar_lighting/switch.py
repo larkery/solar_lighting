@@ -65,7 +65,8 @@ settings_schema = vol.Schema({
 }, extra = vol.ALLOW_EXTRA)
 
 settings_schema_no_defaults = vol.Schema({
-    vol.Optional("update_delta"): cv.positive_int,
+    vol.Optional("brightness_update_delta"): cv.positive_int,
+    vol.Optional("temperature_update_delta"): cv.positive_int,
     vol.Optional("brightness_adjust"): cv.boolean,
     vol.Optional("brightness_min"): brightness,
     vol.Optional("brightness_max"): brightness,
