@@ -47,7 +47,8 @@ brightness = vol.All( vol.Coerce(int), vol.Range(min=1, max=255) )
 color_temp = vol.All( vol.Coerce(int), vol.Range(min=1000, max=10000) )
 
 settings_schema = vol.Schema({
-    vol.Optional("update_delta", default=2): cv.positive_int,
+    vol.Optional("brightness_update_delta", default=2): cv.positive_int,
+    vol.Optional("temperature_update_delta", default=20): cv.positive_int,
     vol.Optional("brightness_adjust", default = True): cv.boolean,
     vol.Optional("brightness_min", default=25): brightness,
     vol.Optional("brightness_max", default=255): brightness,
@@ -213,10 +214,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             state = self.hass.states.get(entity_id)
 
             if state and state.state == STATE_ON:
-                tmax = light.get("temperature_max")
-                tmin = light.get("temperature_min")
-                tp = 100 / abs(tmax - tmin)
-                
                 update = {}
                 cur_brightness = state.attributes.get(ATTR_BRIGHTNESS)
                 cur_temperature = state.attributes.get(ATTR_COLOR_TEMP)
@@ -227,23 +224,26 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 ex_brightness = self._expected_brightness.get(entity_id, cur_brightness)
                 ex_temperature = self._expected_temperature.get(entity_id, cur_temperature)
                 
-                delta = light.get("update_delta")
+                brightness_delta = light.get("brightness_update_delta")
+                temperature_delta = light.get("temperature_update_delta")
 
-                if cur_brightness and abs(ex_brightness - cur_brightness) > delta:
+                if cur_brightness and abs(ex_brightness - cur_brightness) > brightness_delta:
                     self._manual_brightness.add(entity_id)
-                if cur_temperature and abs(ex_temperature - cur_temperature) * tp > delta:
+                if cur_temperature and abs(ex_temperature - cur_temperature) > temperature_delta:
                     self._manual_temperature.add(entity_id)
                 
                 if entity_id not in self._manual_brightness and light.get("brightness_adjust"):
                     brightness = evaluate_brightness(self._sleep_mode, times, light)
                     update[ATTR_BRIGHTNESS] = brightness
-                    if not(cur_brightness) or abs(cur_brightness - brightness) > delta:
+                    if not(cur_brightness) or abs(cur_brightness - brightness) > brightness_delta:
+                        _LOGGER.info("%s needs brightness update", entity_id)
                         needs_update.add(entity_id)
 
                 if entity_id not in self._manual_temperature and light.get("temperature_adjust"):
                     temperature = evaluate_temperature(self._sleep_mode, times, light)
                     update[ATTR_COLOR_TEMP] = temperature
-                    if not(cur_temperature) or abs(cur_temperature - temperature) * tp > delta:
+                    if not(cur_temperature) or abs(cur_temperature - temperature) > temperature_delta:
+                        _LOGGER.info("%s needs temperature update", entity_id)
                         needs_update.add(entity_id)
 
                 if entity_id in needs_update:
@@ -254,7 +254,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 self._manual_temperature.discard(entity_id)
                 self._expected_brightness.pop(entity_id, None)
                 self._expected_temperature.pop(entity_id, None)
-        
 
         for (entity_id, state) in target_state.items():
             if entity_id in needs_update:
@@ -265,6 +264,9 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             # everything past this point works in mired, not kelvin
             if ATTR_COLOR_TEMP in state:
                 state[ATTR_COLOR_TEMP] = color_temperature_kelvin_to_mired(state[ATTR_COLOR_TEMP])
+
+        if target_state:
+            _LOGGER.info("Before grouping: %s", target_state)
         
         # Process groups. Nested groups are not handled. If a group is
         # contained within another group we only want to send command
