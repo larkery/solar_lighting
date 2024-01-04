@@ -63,6 +63,23 @@ settings_schema = vol.Schema({
     vol.Optional("transition", default = 2): cv.positive_int
 }, extra = vol.ALLOW_EXTRA)
 
+common_keys = [
+    "update_delta",
+    "brightness_adjust",
+    "brightness_min",
+    "brightness_max",
+    "temperature_adjust",
+    "temperature_min",
+    "temperature_max",
+    "brightness_k",
+    "brightness_x",
+    "temperature_k",
+    "temperature_x",
+    "sleep_brightness",
+    "sleep_temperature",
+    "transition",
+]
+
 PLATFORM_SCHEMA = vol.All(
     vol.Schema({
         vol.Required(CONF_PLATFORM): "solar_lighting",
@@ -114,11 +131,12 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         self._manual_temperature = set()
 
         self._lights_by_id = {}
+        common_config = {k: config.get(k) for k in common_keys}
         for light in config.get("lights", []):
             if isinstance(light, str):
-                light = {**config, ATTR_ENTITY_ID: light}
+                light = {**common_config, ATTR_ENTITY_ID: light}
             else:
-                light = {**config, **light}
+                light = {**common_config, **light}
             _LOGGER.debug("light config: %s", light)
             if "sleep_brightness" not in light:
                 light["sleep_brightness"] = light.get("brightness_min")
@@ -462,6 +480,7 @@ def get_times(hass):
     return (now, sunrise, noon, sunset)
 
 def evaluate_brightness(sleep_mode, times, light):
+    _LOGGER.debug("eval brightness for %s, %s, %s", sleep_mode, times, light)
     if sleep_mode:
         return light.get("sleep_brightness")
     else:
@@ -472,6 +491,7 @@ def evaluate_brightness(sleep_mode, times, light):
                               light.get("brightness_max"))
 
 def evaluate_temperature(sleep_mode, times, light):
+    _LOGGER.debug("eval temperature for %s, %s, %s", sleep_mode, times, light)
     if sleep_mode:
         return light.get("sleep_temperature")
     else:
