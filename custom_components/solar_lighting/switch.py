@@ -263,7 +263,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 if ATTR_COLOR_TEMP in state:
                     self._expected_temperature[entity_id] = state[ATTR_COLOR_TEMP]
             # everything past this point works in mired, not kelvin
-            state[ATTR_COLOR_TEMP] = color_temperature_kelvin_to_mired(state[ATTR_COLOR_TEMP])
+            if ATTR_COLOR_TEMP in state:
+                state[ATTR_COLOR_TEMP] = color_temperature_kelvin_to_mired(state[ATTR_COLOR_TEMP])
         
         # Process groups. Nested groups are not handled. If a group is
         # contained within another group we only want to send command
