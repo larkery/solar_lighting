@@ -406,7 +406,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         target_state = {}
         times = None
 
-        turn_on_twice = []
+        turn_on_twice = set()
         
         for entity in entities:
             if entity in self._lights_by_id:
@@ -419,10 +419,10 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 
                 light = self._lights_by_id[entity]
                 if light.get("turn_on_twice"):
-                    turn_on_twice.append(entity)
+                    turn_on_twice.add(entity)
                 for child in light.get("group", []):
                     if self._lights_by_id.get(child,{}).get("turn_on_twice"):
-                        turn_on_twice.append(child)
+                        turn_on_twice.add(child)
                 
                 tgt = {}
                 if control_brightness:
@@ -466,6 +466,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                         self._expected_brightness[eid] = value[ATTR_BRIGHTNESS]
 
                 if turn_on_twice:
+                    _LOGGER.info("double turn-on: %s", turn_on_twice)
                     await self.hass.async_create_task(
                         self.hass.services.async_call(
                             call.domain, call.service, {ATTR_ENTITY_ID: turn_on_twice},
