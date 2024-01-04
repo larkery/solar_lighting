@@ -39,6 +39,8 @@ from homeassistant.helpers.event import (
 
 from . import DOMAIN
 
+from .hass_utils import setup_service_call_interceptor
+
 _LOGGER = logging.getLogger(__name__)
 
 brightness = vol.All( vol.Coerce(int), vol.Range(min=1, max=100) )
@@ -82,10 +84,6 @@ PLATFORM_SCHEMA = vol.All(
     } , extra = vol.ALLOW_EXTRA),
     settings_schema # toplevel global settings
 )
-
-def setup(hass, config):
-    _LOGGER.warning("setup switch")
-    return True
 
 def setup_platform(hass, config, add_devices, discovery_info = None):
     main_switch = MainSwitch(hass, config)
@@ -307,23 +305,35 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         )
             
     async def async_added_to_hass(self):
+        self.on_remove(
+            setup_service_call_interceptor(
+                self.hass,
+                LIGHT_DOMAIN,
+                SERVICE_TURN_ON,
+                self._intercept_service_call
+            )
+        )
+
+        self.on_remove(
+            setup_service_call_interceptor(
+                self.hass,
+                LIGHT_DOMAIN,
+                SERVICE_TOGGLE,
+                self._intercept_service_call
+            )
+        )
+        
         self.async_on_remove(
             async_track_time_interval(self.hass, self.update_lights, self._update_interval)
         )
 
-        # self.async_on_remove(
-        #     async_track_state_change(
-        #         self.hass,
-        #         [l.get(ATTR_ENTITY_ID) for l in self._lights],
-        #         self.update_lights,
-        #         to_state = ["on", "off"]
-        #     )
-        # )
-
         if self._state is not None: return
         state = await self.async_get_last_state()
         self._state = state and state.state == STATE_ON
-    
+
+    async def _intercept_service_call(self, call, data):
+        _LOGGER("intercept %s %s", call, data)
+        
     async def async_set_sleep_mode(self, sleep_mode):
         if self._sleep_mode != sleep_mode:
             self._sleep_mode = sleep_mode
