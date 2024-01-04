@@ -112,18 +112,25 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         
         self._manual_brightness = set()
         self._manual_temperature = set()
-        self._sleep_brightness = config.get("sleep_brightness", config.get("brightness_min"))
-        self._sleep_temperature = config.get("sleep_temperature", config.get("temperature_min"))
-        
+
+        self._lights_by_id = {}
         for light in config.get("lights", []):
             if isinstance(light, str):
                 light = {**config, ATTR_ENTITY_ID: light}
             else:
                 light = {**config, **light}
+
+            if "sleep_brightness" not in light:
+                light["sleep_brightness"] = light.get("brightness_min")
+            if "sleep_temperature" not in light:
+                light["sleep_temperature"] = light.get("temperature_min")
+            
             if light.get("group"):
                 self._groups.append(light)
             else:
                 self._lights.append(light)
+            
+            self._lights_by_id[light.get(ATTR_ENTITY_ID)] = light
         # when we process groups we want to do biggest ones first
         self._groups.sort(key = lambda g : len(g.get("group", [])), reverse = True)
 
@@ -195,7 +202,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 
                 if entity_id not in self._manual_brightness and light.get("brightness_adjust"):
                     if self._sleep_mode:
-                        brightness = 255*self._sleep_brightness/100
+                        brightness = 255*light.get("sleep_brightness", light.get("brightness_min"))/100
                     else:
                         brightness = evaluate_curve(now, sunrise, noon, sunset,
                                                     light.get("brightness_k"),
@@ -208,7 +215,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
 
                 if entity_id not in self._manual_temperature and light.get("temperature_adjust"):
                     if self._sleep_mode:
-                        temperature = self._sleep_temperature
+                        temperature = light.get("sleep_temperature", light.get("temperature_min"))
                     else:
                         temperature = evaluate_curve(now, sunrise, noon, sunset,
                                                      light.get("temperature_k"),
@@ -227,7 +234,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 self._expected_brightness.pop(entity_id, None)
                 self._expected_temperature.pop(entity_id, None)
         
-        _LOGGER.warning("Before grouping: %s", target_state)
 
         for (entity_id, state) in target_state.items():
             if entity_id in needs_update:
@@ -332,8 +338,73 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         self._state = state and state.state == STATE_ON
 
     async def _intercept_service_call(self, call, data):
-        _LOGGER("intercept %s %s", call, data)
-        
+        entities = data.get(ATTR_ENTITY_ID)
+        targets_my_entity = False
+        targets_other_entity = False
+        control_brightness = ATTR_BRIGHTNESS in data
+        control_temperature = ATTR_COLOR_TEMP in data
+        target_state = {}
+        times = None
+        for entity in entities:
+            if entity in self._lights_by_id:
+                cur_state = self.hass.states.get(entity_id)
+                is_on = cur_state and cur_state.state == STATE_ON
+
+                if not(self._sleep_mode):
+                    if not(times): times = get_times(self.hass)
+                    sunrise, noon, sunset, now = times
+                
+                light = self._lights_by_id[entity]
+                tgt = {}
+                if control_brightness:
+                    self._manual_brightness.add(entity)
+                elif is_on:
+                    pass
+                elif self._sleep_mode:
+                    tgt[ATTR_BRIGHTNESS] = 255*light.get("sleep_brightness")/100
+                else:
+                    tgt[ATTR_BRIGHTNESS] = evaluate_curve(now, sunrise, noon, sunset,
+                                                          light.get("brightness_k"),
+                                                          light.get("brightness_x"),
+                                                          255*light.get("brightness_min")/100,
+                                                          255*light.get("brightness_max")/100)
+                if control_temperature:
+                    self._manual_temperature.add(entity)
+                elif is_on:
+                    pass
+                elif self.sleep_mode:
+                    tgt[ATTR_COLOR_TEMP] = light.get("sleep_temperature")
+                else:
+                    tgt[ATTR_COLOR_TEMP] = color_temperature_kelvin_to_mired(
+                        evaluate_curve(now, sunrise, noon, sunset,
+                                       light.get("temperature_k"),
+                                       light.get("temperature_x"),
+                                       tmin, tmax)
+                    )
+
+                if tgt:
+                    target_state[entity] = tgt
+            else:
+                targets_other_entity = True
+
+        if target_state and not(targets_other_entity):
+            if all_equal(target_state.values()):
+                _LOGGER.warning("easy adaptation! values patched!")
+                value = target_state.values[0]
+                if ATTR_COLOR_TEMP in value:
+                    data[ATTR_COLOR_TEMP] = value[ATTR_COLOR_TEMP]
+                    ex = color_temperature_mired_to_kelvin(value[ATTR_COLOR_TEMP])
+                    for eid in target_state:
+                        self._expected_temperature[eid] = ex
+                if ATTR_BRIGHTNESS in value:
+                    data[ATTR_BRIGHTNESS] = value[ATTR_BRIGHTNESS]
+                    for eid in target_state:
+                        self._expected_brightness[eid] = value[ATTR_BRIGHTNESS]
+            else:
+                _LOGGER.warning("divergent values %s", target_state)
+        elif target_state:
+            _LOGGER.warning("call covers other entities, fail")
+            
     async def async_set_sleep_mode(self, sleep_mode):
         if self._sleep_mode != sleep_mode:
             self._sleep_mode = sleep_mode
