@@ -134,12 +134,9 @@ def setup_platform(hass, config, add_devices, discovery_info = None):
     return True
 
 class MainSwitch(SwitchEntity, RestoreEntity):
-    switch_count = 0
-    
     def __init__(self, hass, config):
         self.hass = hass
-        self._context = Context(id = f"solar_lighting_{MainSwitch.switch_count}")
-        MainSwitch.switch_count = MainSwitch.switch_count + 1
+        self._context = Context()
         name = config.get("name")
         self._config = config
         self._extra_attributes = {}
@@ -395,7 +392,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             return
         
         if call.context:
-            _LOGGER.info("intercept context %s", call.context.id)
+            _LOGGER.info("intercept context %s <> ", call.context.id, self._context.id)
         
         entities = data.get(ATTR_ENTITY_ID)
         params = data["params"]
