@@ -379,7 +379,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                         evaluate_curve(now, sunrise, noon, sunset,
                                        light.get("temperature_k"),
                                        light.get("temperature_x"),
-                                       tmin, tmax)
+                                       light.get("temperature_min"),
+                                       light.get("temperature_max"))
                     )
 
                 if tgt:
