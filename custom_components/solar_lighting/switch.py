@@ -356,7 +356,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
     async def async_wait_to_turn_on(self, state):
         await asyncio.sleep(0.5+state[ATTR_TRANSITION])
         await self.hass.services.async_call(
-            LIGHT_DOMAIN, SERVICE_TURN_ON, state
+            LIGHT_DOMAIN, SERVICE_TURN_ON, state, context = self.context
         )
             
     async def async_added_to_hass(self):
@@ -393,7 +393,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             return
 
         if call.context == self.context:
-            _LOGGER.info("skip own service call")
             return
         
         entities = data.get(ATTR_ENTITY_ID)
