@@ -38,7 +38,7 @@ from . import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 brightness = vol.All( vol.Coerce(int), vol.Range(min=1, max=100) )
-colour_temp = vol.All( vol.Coerce(int), vol.Range(min=1000, max=10000) )
+color_temp = vol.All( vol.Coerce(int), vol.Range(min=1000, max=10000) )
 
 settings_schema = vol.Schema({
     vol.Optional("intercept_turn_on", default=True): cv.boolean,
@@ -47,14 +47,14 @@ settings_schema = vol.Schema({
     vol.Optional("brightness_min", default=5): brightness,
     vol.Optional("brightness_max", default=100): brightness,
     vol.Optional("temperature_adjust", default = True): cv.boolean,
-    vol.Optional("temperature_min", default = 2500): colour_temp,
-    vol.Optional("temperature_max", default = 5500): colour_temp,
+    vol.Optional("temperature_min", default = 2500): color_temp,
+    vol.Optional("temperature_max", default = 5500): color_temp,
     vol.Optional("brightness_k", default = 1.0): float,
     vol.Optional("brightness_x", default = 0.0): float,
     vol.Optional("temperature_k", default = 0.5): float,
     vol.Optional("temperature_x", default = 0.5): float,
     vol.Optional("sleep_brightness", default = 5): brightness,
-    vol.Optional("sleep_temperature", default = 2000): colour_temp,
+    vol.Optional("sleep_temperature", default = 2000): color_temp,
     vol.Optional("transition", default = 2): cv.positive_int
 }, extra = vol.ALLOW_EXTRA)
 
@@ -88,8 +88,9 @@ def setup_platform(hass, config, add_devices, discovery_info = None):
 class MainSwitch(SwitchEntity, RestoreEntity):
     def __init__(self, hass, config):
         self.hass = hass
-        self._name = config.get("name")
-        self._entity_id = f"switch.solar_lighting_{slugify(self._name)}"
+        name = config.get("name")
+        self._name = f"Solar Lighting {name}"
+        self._entity_id = f"switch.solar_lighting_{slugify(name)}"
         self._sleep_mode = None
         self._state = None
         self._lights = []
@@ -101,7 +102,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         self._manual_brightness = set()
         self._manual_temperature = set()
         self._sleep_brightness = config.get("sleep_brightness")
-        self._sleep_temperature = color_temperature_kelvin_to_mired(config.get("sleep_temperature"))
+        self._sleep_temperature = config.get("sleep_temperature")
         
         for light in config.get("lights", []):
             if isinstance(light, str):
@@ -129,6 +130,10 @@ class MainSwitch(SwitchEntity, RestoreEntity):
     def is_on(self):
         return self._state
 
+    @property
+    def extra_state_attributes(self):
+        return {"manual_brightness": self._manual_brightness}
+
     async def update_lights(self, *args):
         if not(self._state): return
         sunrise, noon, sunset, now = get_times(self.hass)
@@ -141,9 +146,10 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             state = self.hass.states.get(entity_id)
 
             if state and state.state == STATE_ON:
-                tmax = color_temperature_kelvin_to_mired(light.get("temperature_max"))
-                tmin = color_temperature_kelvin_to_mired(light.get("temperature_min"))
-                tp = 100 / (tmax - tmin)
+                tmax = light.get("temperature_max")
+                tmin = light.get("temperature_min")
+                tp = 100 / abs(tmax - tmin)
+                tp_mired = 100 / abs(color_temperature_kelvin_to_mired(tmin) - color_temperature_kelvin_to_mired(tmax))
                 
                 update = {}
                 cur_brightness = state.attributes.get(ATTR_BRIGHTNESS)
@@ -156,7 +162,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
 
                 if abs(ex_brightness - cur_brightness) > delta:
                     self._manual_brightness.add(entity_id)
-                if abs(ex_temperature - cur_temperature) * tp > delta:
+                if abs(ex_temperature - cur_temperature) * tp_mired > delta:
                     self._manual_temperature.add(entity_id)
                 
                 if entity_id not in self._manual_brightness and \
@@ -183,8 +189,10 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                                                      light.get("temperature_k"),
                                                      light.get("temperature_x"),
                                                      tmin, tmax)
-                    update[ATTR_COLOR_TEMP] = temperature
+                    update[ATTR_COLOR_TEMP] = color_temperature_kelvin_to_mired(temperature)
                     cur = state.attributes.get(ATTR_COLOR_TEMP, None)
+                    if cur:
+                        cur = color_temperature_mired_to_kelvin(cur)
                     if not(cur) or abs(cur - temperature) * tp > delta:
                         needs_update.add(entity_id)
 
@@ -196,9 +204,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 self._manual_temperature.discard(entity_id)
                 self._expected_brightness.pop(entity_id, None)
                 self._expected_temperature.pop(entity_id, None)
-
-        _LOGGER.warning("brightness: %s %s", self._manual_brightness, self._expected_brightness)
-        _LOGGER.warning("temperature: %s %s", self._manual_temperature, self._expected_temperature)
         
         _LOGGER.warning("Before grouping: %s", target_state)
 
@@ -231,8 +236,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
 
 
         _LOGGER.warning("After grouping: %s", target_state)
-        # OK, target_state now contains groups as well
-        # so we can issue our update commands, and then set expectations
+
         turn_ons = []
         for (entity_id, state) in target_state.items():
             state[ATTR_ENTITY_ID] = entity_id
