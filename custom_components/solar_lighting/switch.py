@@ -227,7 +227,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             entity_id = light.get(ATTR_ENTITY_ID)
             state = self.hass.states.get(entity_id)
 
-            if (now - state.last_changed) < debounce:
+            if state and (now - state.last_changed) < debounce:
                 log.info("Skip %s as it has a very recent state change", entity_id)
                 continue
             
