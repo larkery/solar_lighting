@@ -1,5 +1,6 @@
 # TODO monkeypatch turn on / toggle.
 
+import time
 import asyncio
 import voluptuous as vol
 import datetime
@@ -7,6 +8,7 @@ import logging
 import homeassistant.helpers.config_validation as cv
 import homeassistant.util.dt as dt_util
 from homeassistant.core import Context
+
 from homeassistant.helpers.sun import get_astral_location
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.components.switch import SwitchEntity
@@ -203,6 +205,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
 
     async def update_lights(self, *args):
         if not(self._state): return
+        start_time = time.time()
         times = get_times(self.hass)
 
         self._extra_attributes[ATTR_BRIGHTNESS] = \
@@ -217,10 +220,17 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         target_state = {}
         needs_update = set()
 
+        now = dt_util.utcnow()
+        debounce = datetime.timedelta(seconds = 1)
+        
         for light in self._lights:
             entity_id = light.get(ATTR_ENTITY_ID)
             state = self.hass.states.get(entity_id)
 
+            if (now - state.last_changed) < debounce:
+                log.info("Skip %s as it has a very recent state change", entity_id)
+                continue
+            
             if state and state.state == STATE_ON:
                 update = {}
                 cur_brightness = state.attributes.get(ATTR_BRIGHTNESS)
@@ -271,11 +281,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     update[ATTR_TRANSITION] = light.get("transition", 0)
                     target_state[entity_id] = update
             else:
-                self._manual_brightness.discard(entity_id)
-                self._manual_temperature.discard(entity_id)
-                self._expected_brightness.pop(entity_id, None)
-                self._expected_temperature.pop(entity_id, None)
-
+                self.clear_overrides_and_expectations(entity_id)
+                
         for (entity_id, state) in target_state.items():
             if entity_id in needs_update:
                 if ATTR_BRIGHTNESS in state:
@@ -353,6 +360,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 )
         if turn_ons:
             await asyncio.wait(turn_ons)
+        log.info("Update lights in %s", time.time() - start_time)
 
     def set_manual_brightness(self, entity_id):
         if entity_id not in self._manual_brightness:
@@ -395,6 +403,16 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         
         self.async_on_remove(
             async_track_time_interval(self.hass, self.update_lights, self._update_interval)
+        )
+
+        async def on_state_change(entity_id, from_state, to_state):
+            self.clear_overrides_and_expectations(entity_id)
+        
+        self.async_on_remove(
+            async_track_state_change(self.hass,
+                                     self._lights_by_id.keys(),
+                                     on_state_change,
+                                     to_state = ["off"])
         )
 
         if self._state is not None: return
@@ -501,11 +519,17 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             self.clear_overrides_and_expectations()
             await self.update_lights()
 
-    def clear_overrides_and_expectations(self):
-        self._expected_temperature = {}
-        self._expected_brightness = {}
-        self._manual_temperature = set()
-        self._manual_brightness = set()
+    def clear_overrides_and_expectations(self, entity_id = None):
+        if entity_id:
+            self._manual_brightness.discard(entity_id)
+            self._manual_temperature.discard(entity_id)
+            self._expected_brightness.pop(entity_id, None)
+            self._expected_temperature.pop(entity_id, None)
+        else:
+            self._expected_temperature = {}
+            self._expected_brightness = {}
+            self._manual_temperature = set()
+            self._manual_brightness = set()
             
     async def async_turn_on(self, **kwargs):
         self._state = True
