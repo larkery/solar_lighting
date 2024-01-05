@@ -44,7 +44,7 @@ from . import DOMAIN
 
 from .hass_utils import setup_service_call_interceptor
 
-_LOGGER = logging.getLogger(__name__)
+log = logging.getLogger(__name__)
 
 brightness = vol.All( vol.Coerce(int), vol.Range(min=1, max=255) )
 color_temp = vol.All( vol.Coerce(int), vol.Range(min=1000, max=10000) )
@@ -287,7 +287,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 state[ATTR_COLOR_TEMP] = color_temperature_kelvin_to_mired(state[ATTR_COLOR_TEMP])
 
         if target_state:
-            _LOGGER.info("Before grouping: %s", target_state)
+            log.info("Before grouping: %s", target_state)
         
         for group in self._groups:
             members = group.get("group")
@@ -299,12 +299,12 @@ class MainSwitch(SwitchEntity, RestoreEntity):
 
             if member_needs_update:
                 targets = [target_state.get(e, None) for e in members]
-                _LOGGER.info("Maybe update group %s %s %s", group.get(ATTR_ENTITY_ID),
+                log.info("Maybe update group %s %s %s", group.get(ATTR_ENTITY_ID),
                              members, targets)
 
                 if all_equal(targets):
                     # remove from target_state
-                    _LOGGER.info("Target state for group %s is consistent at %s",
+                    log.info("Target state for group %s is consistent at %s",
                                  group.get(ATTR_ENTITY_ID), targets[0])
 
                     for e in members:
@@ -313,7 +313,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                         target_state[group.get(ATTR_ENTITY_ID)] = targets[0]
 
         if target_state:
-            _LOGGER.info("After grouping: %s", target_state)
+            log.info("After grouping: %s", target_state)
 
         turn_ons = []
         for (entity_id, state) in target_state.items():
@@ -356,14 +356,14 @@ class MainSwitch(SwitchEntity, RestoreEntity):
 
     def set_manual_brightness(self, entity_id):
         if entity_id not in self._manual_brightness:
-            _LOGGER.info("%s -> manual brightness", entity_id)
+            log.info("%s -> manual brightness", entity_id)
             self._manual_brightness.update(
                 self._lights_by_id.get(entity_id, {}).get("group", [entity_id])
             )
 
     def set_manual_temperature(self, entity_id):
         if entity_id not in self._manual_temperature:
-            _LOGGER.info("%s -> manual temperature", entity_id)
+            log.info("%s -> manual temperature", entity_id)
             self._manual_temperature.update(
                 self._lights_by_id.get(entity_id, {}).get("group", [entity_id])
             )
@@ -467,7 +467,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             target_values = list(target_state.values())
             if all_equal(target_values):
                 value = target_values[0]
-                _LOGGER.info("Adapt to %s", value)
+                log.info("Adapt to %s", value)
                 
                 if ATTR_COLOR_TEMP in value:
                     params[ATTR_COLOR_TEMP] = value[ATTR_COLOR_TEMP]
@@ -480,7 +480,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                         self._expected_brightness[eid] = value[ATTR_BRIGHTNESS]
 
                 if turn_on_twice:
-                    _LOGGER.info("double turn-on: %s", turn_on_twice)
+                    log.info("double turn-on: %s", turn_on_twice)
                     await self.hass.services.async_call(
                         LIGHT_DOMAIN,
                         call.service,
@@ -490,9 +490,9 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     )
 
             else:
-                _LOGGER.warning("divergent values %s", target_state)
+                log.warning("divergent values %s", target_state)
         elif target_state:
-            _LOGGER.warning("call covers other entities, fail")
+            log.warning("call covers other entities, fail")
 
             
     async def async_set_sleep_mode(self, sleep_mode):
@@ -571,7 +571,7 @@ def get_times(hass):
     return (now, sunrise, noon, sunset)
 
 def evaluate_brightness(sleep_mode, times, light):
-    _LOGGER.debug("eval brightness for %s, %s, %s", sleep_mode, times, light)
+    log.debug("eval brightness for %s, %s, %s", sleep_mode, times, light)
     if sleep_mode:
         return light.get("sleep_brightness")
     else:
@@ -582,7 +582,7 @@ def evaluate_brightness(sleep_mode, times, light):
                               light.get("brightness_max"))
 
 def evaluate_temperature(sleep_mode, times, light):
-    _LOGGER.debug("eval temperature for %s, %s, %s", sleep_mode, times, light)
+    log.debug("eval temperature for %s, %s, %s", sleep_mode, times, light)
     if sleep_mode:
         return light.get("sleep_temperature")
     else:
