@@ -217,9 +217,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
 
     @property
     def extra_state_attributes(self):
-        return {**self._extra_attributes,
-                "manual brightness": self._manual_brightness,
-                "manual temperature": self._manual_temperature}
+        return self._extra_attributes
 
     async def update_lights(self, *args):
         if not(self._state): return
@@ -274,19 +272,21 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 else:
                     supports_brightness = True
                     supports_temperature = True
-                
+                    
                 if cur_brightness and abs(ex_brightness - cur_brightness) > brightness_delta:
                     self.set_manual_brightness(entity_id)
                     
                 if cur_temperature and abs(ex_temperature - cur_temperature) > temperature_delta:
                     self.set_manual_temperature(entity_id)
-                
+
+                state.attributes['Control'] = []
                 if entity_id not in self._manual_brightness and light.get("brightness_adjust"):
                     brightness = evaluate_brightness(self._sleep_mode, times, light)
                     update[ATTR_BRIGHTNESS] = brightness
                     if not(cur_brightness) or abs(cur_brightness - brightness) > brightness_delta:
                         if supports_brightness:
                             needs_update.add(entity_id)
+                            state.attributes['Control'] += ["brightness"]
 
                 if entity_id not in self._manual_temperature and light.get("temperature_adjust"):
                     temperature = evaluate_temperature(self._sleep_mode, times, light)
@@ -294,12 +294,17 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     if not(cur_temperature) or abs(cur_temperature - temperature) > temperature_delta:
                         if supports_temperature:
                             needs_update.add(entity_id)
+                            state.attributes['Control'] += ["temperature"]
 
                 if entity_id in needs_update:
                     update[ATTR_TRANSITION] = light.get("transition", 0)
                     target_state[entity_id] = update
             else:
                 self.clear_overrides_and_expectations(entity_id)
+                if state: state.attributes.pop('Control', None)
+                    
+            if state:
+                self.hass.states.set(entity_id, state.state, state.attributes)
                 
         for (entity_id, state) in target_state.items():
             if entity_id in needs_update:
