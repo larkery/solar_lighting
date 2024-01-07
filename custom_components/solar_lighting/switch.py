@@ -241,9 +241,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         now = dt_util.utcnow()
         debounce = datetime.timedelta(seconds = 1)
 
-        log.info("Manual temp: %s", self._manual_temperature)
-        log.info("Manual bright: %s", self._manual_brightness)
-        
         for light in self._lights:
             entity_id = light.get(ATTR_ENTITY_ID)
             state = self.hass.states.get(entity_id)
@@ -301,7 +298,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 if entity_id in needs_update:
                     update[ATTR_TRANSITION] = light.get("transition", 0)
                     target_state[entity_id] = update
-                    log.info("Update for %s: %s", entity_id, update)
             else:
                 self.clear_overrides_and_expectations(entity_id)
                 
@@ -369,14 +365,14 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         if entity_id not in self._manual_brightness:
             log.info("%s -> manual brightness", entity_id)
             self._manual_brightness.update(
-                self._lights_by_id.get(entity_id, {}).get("group", [entity_id])
+                self._lights_by_id.get(entity_id, {}).get("group") or [entity_id]
             )
 
     def set_manual_temperature(self, entity_id):
         if entity_id not in self._manual_temperature:
             log.info("%s -> manual temperature", entity_id)
             self._manual_temperature.update(
-                self._lights_by_id.get(entity_id, {}).get("group", [entity_id])
+                self._lights_by_id.get(entity_id, {}).get("group") or [entity_id]
             )
             
     async def async_split_turn_on(self, state):
