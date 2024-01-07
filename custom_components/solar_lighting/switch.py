@@ -347,26 +347,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                and state[ATTR_TRANSITION] > 0 \
                and ATTR_BRIGHTNESS in state \
                and ATTR_COLOR_TEMP in state:
-                # split it up because tradfri-eee don't like it
-                brightness_only = state.copy()
-                del brightness_only[ATTR_COLOR_TEMP]
-                del state[ATTR_BRIGHTNESS]
-                
-                transition = brightness_only[ATTR_TRANSITION] / 2
-                brightness_only[ATTR_TRANSITION] = transition
-                state[ATTR_TRANSITION] = transition
-    
                 turn_ons.append(
-                    self.hass.async_create_task(
-                        self.hass.services.async_call(
-                            LIGHT_DOMAIN, SERVICE_TURN_ON, state, context=self.context
-                        )
-                    )
-                )
-                turn_ons.append(
-                    self.hass.async_create_task(
-                        self.async_wait_to_turn_on( brightness_only )
-                    )
+                    self.hass.async_create_task( self.async_split_turn_on( state ) )
                 )
             else:
                 turn_ons.append(
@@ -393,10 +375,21 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 self._lights_by_id.get(entity_id, {}).get("group", [entity_id])
             )
             
-    async def async_wait_to_turn_on(self, state):
-        await asyncio.sleep(0.5+state[ATTR_TRANSITION])
+    async def async_split_turn_on(self, state):
+        brightness_only = state.copy()
+        del brightness_only[ATTR_COLOR_TEMP]
+        del state[ATTR_BRIGHTNESS]
+                
+        transition = brightness_only[ATTR_TRANSITION] / 2
+        brightness_only[ATTR_TRANSITION] = transition
+        state[ATTR_TRANSITION] = transition
+    
         await self.hass.services.async_call(
-            LIGHT_DOMAIN, SERVICE_TURN_ON, state, context = self.context
+            LIGHT_DOMAIN, SERVICE_TURN_ON, state, context=self.context, blocking = True
+        )
+        await asyncio.sleep(0.1) #+state[ATTR_TRANSITION])
+        await self.hass.services.async_call(
+            LIGHT_DOMAIN, SERVICE_TURN_ON, brightness_only, context = self.context
         )
             
     async def async_added_to_hass(self):
