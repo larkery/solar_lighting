@@ -1,5 +1,3 @@
-# TODO monkeypatch turn on / toggle.
-
 import time
 import asyncio
 import voluptuous as vol
@@ -25,6 +23,7 @@ from homeassistant.components.light import (
     ATTR_BRIGHTNESS_STEP,
     ATTR_BRIGHTNESS_STEP_PCT,
     ATTR_COLOR_TEMP,
+    ATTR_COLOR_NAME,
     ATTR_COLOR_TEMP_KELVIN,
     ATTR_RGB_COLOR,
     ATTR_TRANSITION,
@@ -472,7 +471,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             or ATTR_RGBW_COLOR in params \
             or ATTR_RGBWW_COLOR in params \
             or ATTR_XY_COLOR in params \
-            or ATTR_WHITE in params
+            or ATTR_WHITE in params \
+            or ATTR_COLOR_NAME in params
         target_state = {}
         times = None
 
