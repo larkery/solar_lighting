@@ -124,13 +124,11 @@ PLATFORM_SCHEMA = vol.All(
         vol.Optional("sleep", default = True): cv.boolean,
         vol.Optional("lights"): vol.Schema([
             vol.Any(
-                # bare entity i
                 cv.entity_id,
                 vol.All(
                     vol.Schema({vol.Required(ATTR_ENTITY_ID): cv.entity_id,
-                                vol.Optional("group"): cv.entity_ids,
-                                vol.Optional("turn_on_twice", default = False): cv.boolean}
-                               , extra = vol.ALLOW_EXTRA),
+                                vol.Optional("group"): cv.entity_ids},
+                               extra = vol.ALLOW_EXTRA),
                     settings_schema_no_defaults
                 )
             )
@@ -181,7 +179,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 light["sleep_brightness"] = light.get("brightness_min")
             if not(light.get("sleep_temperature")):
                 light["sleep_temperature"] = light.get("temperature_min")
-            
+    
             if light.get("group"):
                 self._groups.append(light)
                 for sub_id in light.get("group"):
@@ -190,11 +188,9 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                                  "group":None}
                     
                     self._lights_by_id[sub_id] = sub_light
-            
-            self._lights_by_id[light.get(ATTR_ENTITY_ID)] = {
-                **self._lights_by_id.get(light.get(ATTR_ENTITY_ID), {}),
-                **light
-            }
+    
+            self._lights_by_id[light.get(ATTR_ENTITY_ID)] = { **self._lights_by_id.get(light.get(ATTR_ENTITY_ID), {}),
+                                                              **light }
 
         for light in self._lights_by_id.values():
             if not(light.get("group")):
@@ -359,7 +355,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 transition = brightness_only[ATTR_TRANSITION] / 2
                 brightness_only[ATTR_TRANSITION] = transition
                 state[ATTR_TRANSITION] = transition
-
+    
                 turn_ons.append(
                     self.hass.async_create_task(
                         self.hass.services.async_call(
@@ -475,8 +471,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         target_state = {}
         times = None
 
-        turn_on_twice = set()
-        
         for entity in entities:
             if entity in self._lights_by_id:
                 cur_state = self.hass.states.get(entity)
@@ -487,12 +481,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     sunrise, noon, sunset, now = times
                 
                 light = self._lights_by_id[entity]
-                if light.get("turn_on_twice"):
-                    turn_on_twice.add(entity)
-                for child in light.get("group", []):
-                    if self._lights_by_id.get(child,{}).get("turn_on_twice"):
-                        turn_on_twice.add(child)
-                
                 tgt = {}
                 if control_brightness:
                     self.set_manual_brightness(entity)
@@ -533,16 +521,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     params[ATTR_BRIGHTNESS] = value[ATTR_BRIGHTNESS]
                     for eid in target_state:
                         self._expected_brightness[eid] = value[ATTR_BRIGHTNESS]
-
-                if turn_on_twice:
-                    log.info("double turn-on: %s", turn_on_twice)
-                    await self.hass.services.async_call(
-                        LIGHT_DOMAIN,
-                        call.service,
-                        {ATTR_ENTITY_ID: turn_on_twice},
-                        blocking=True,
-                        context=self.context,
-                    )
 
             else:
                 log.warning("divergent values %s", target_state)
