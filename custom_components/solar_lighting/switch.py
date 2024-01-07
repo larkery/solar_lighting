@@ -175,11 +175,16 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             if light.get("group"):
                 self._groups.append(light)
                 for sub_id in light.get("group"):
-                    if sub_id not in self._lights_by_id:
-                        sub_light = {**light, ATTR_ENTITY_ID: sub_id, "group":None}
-                        self._lights_by_id[sub_id] = sub_light
+                    sub_light = {**light,
+                                 **self._lights_by_id.get(sub_id, {ATTR_ENTITY_ID: sub_id}),
+                                 "group":None}
+                    
+                    self._lights_by_id[sub_id] = sub_light
             
-            self._lights_by_id[light.get(ATTR_ENTITY_ID)] = light
+            self._lights_by_id[light.get(ATTR_ENTITY_ID)] = {
+                **self._lights_by_id.get(light.get(ATTR_ENTITY_ID), {}),
+                light
+            }
 
         for light in self._lights_by_id.values():
             if not(light.get("group")):
