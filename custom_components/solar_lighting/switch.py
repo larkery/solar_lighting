@@ -299,6 +299,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     update[ATTR_TRANSITION] = light.get("transition", 0)
                     target_state[entity_id] = update
             else:
+                log.info("Forgetting overrides for %s", entity_id)
                 self.clear_overrides_and_expectations(entity_id)
                 
         for (entity_id, state) in target_state.items():
@@ -416,6 +417,9 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         )
 
         async def on_state_change(entity_id, from_state, to_state):
+            log.info("forgetting manual control for %s %s->%s",
+                     entity_id, from_state, to_state)
+            
             self.clear_overrides_and_expectations(entity_id)
         
         self.async_on_remove(
