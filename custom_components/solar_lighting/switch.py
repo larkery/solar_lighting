@@ -240,6 +240,9 @@ class MainSwitch(SwitchEntity, RestoreEntity):
 
         now = dt_util.utcnow()
         debounce = datetime.timedelta(seconds = 1)
+
+        log.info("Manual temp: %s", self._manual_temperature)
+        log.info("Manual bright: %s", self._manual_brightness)
         
         for light in self._lights:
             entity_id = light.get(ATTR_ENTITY_ID)
@@ -248,7 +251,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             if state and (now - state.last_changed) < debounce:
                 log.info("Skip %s as it has a very recent state change", entity_id)
                 continue
-            
+
             if state and state.state == STATE_ON:
                 update = {}
                 cur_brightness = state.attributes.get(ATTR_BRIGHTNESS)
@@ -298,8 +301,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 if entity_id in needs_update:
                     update[ATTR_TRANSITION] = light.get("transition", 0)
                     target_state[entity_id] = update
+                    log.info("Update for %s: %s", entity_id, update)
             else:
-                log.info("Forgetting overrides for %s", entity_id)
                 self.clear_overrides_and_expectations(entity_id)
                 
         for (entity_id, state) in target_state.items():
@@ -417,9 +420,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         )
 
         async def on_state_change(entity_id, from_state, to_state):
-            log.info("forgetting manual control for %s %s->%s",
-                     entity_id, from_state, to_state)
-            
             self.clear_overrides_and_expectations(entity_id)
         
         self.async_on_remove(
