@@ -227,7 +227,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
 
     async def update_lights(self, *args):
         if not(self._state): return
-        start_time = time.time()
+
         times = get_times(self.hass)
 
         self._extra_attributes[ATTR_BRIGHTNESS] = \
@@ -382,7 +382,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 )
         if turn_ons:
             await asyncio.wait(turn_ons)
-        log.info("Update lights in %s", time.time() - start_time)
 
     def set_manual_brightness(self, entity_id):
         if entity_id not in self._manual_brightness:
