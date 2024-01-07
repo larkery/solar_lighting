@@ -246,6 +246,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             if state and (now - state.last_changed) < debounce:
                 log.info("Skip %s as it has a very recent state change", entity_id)
                 continue
+            if state:
+                new_attributes = dict(state.attributes)
 
             if state and state.state == STATE_ON:
                 update = {}
@@ -279,7 +281,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 if cur_temperature and abs(ex_temperature - cur_temperature) > temperature_delta:
                     self.set_manual_temperature(entity_id)
 
-                new_attributes = dict(state.attributes)
                 new_attributes['Control'] = []
                 if entity_id not in self._manual_brightness and light.get("brightness_adjust"):
                     brightness = evaluate_brightness(self._sleep_mode, times, light)
