@@ -174,10 +174,17 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             
             if light.get("group"):
                 self._groups.append(light)
-            else:
-                self._lights.append(light)
+                for sub_id in light.get("group"):
+                    if sub_id not in self._lights_by_id:
+                        sub_light = {**light, ATTR_ENTITY_ID: sub_id, "group":None}
+                        self._lights_by_id[sub_id] = sub_light
             
             self._lights_by_id[light.get(ATTR_ENTITY_ID)] = light
+
+        for light in self._lights_by_id.values():
+            if not(light.get("group")):
+                self._lights.append(light)
+        
         # when we process groups we want to do biggest ones first
         self._groups.sort(key = lambda g : len(g.get("group", [])), reverse = True)
 
@@ -321,7 +328,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
 
         if target_state:
             log.info("After grouping: %s", target_state)
-
+            
         turn_ons = []
         for (entity_id, state) in target_state.items():
             state[ATTR_ENTITY_ID] = entity_id
