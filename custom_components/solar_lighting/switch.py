@@ -193,7 +193,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             
             self._lights_by_id[light.get(ATTR_ENTITY_ID)] = {
                 **self._lights_by_id.get(light.get(ATTR_ENTITY_ID), {}),
-                light
+                **light
             }
 
         for light in self._lights_by_id.values():
