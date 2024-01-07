@@ -279,14 +279,15 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 if cur_temperature and abs(ex_temperature - cur_temperature) > temperature_delta:
                     self.set_manual_temperature(entity_id)
 
-                state.attributes['Control'] = []
+                new_attributes = dict(state.attributes)
+                new_attributes['Control'] = []
                 if entity_id not in self._manual_brightness and light.get("brightness_adjust"):
                     brightness = evaluate_brightness(self._sleep_mode, times, light)
                     update[ATTR_BRIGHTNESS] = brightness
                     if not(cur_brightness) or abs(cur_brightness - brightness) > brightness_delta:
                         if supports_brightness:
                             needs_update.add(entity_id)
-                            state.attributes['Control'] += ["brightness"]
+                            new_attributes['Control'] += ["brightness"]
 
                 if entity_id not in self._manual_temperature and light.get("temperature_adjust"):
                     temperature = evaluate_temperature(self._sleep_mode, times, light)
@@ -294,17 +295,17 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     if not(cur_temperature) or abs(cur_temperature - temperature) > temperature_delta:
                         if supports_temperature:
                             needs_update.add(entity_id)
-                            state.attributes['Control'] += ["temperature"]
+                            new_attributes['Control'] += ["temperature"]
 
                 if entity_id in needs_update:
                     update[ATTR_TRANSITION] = light.get("transition", 0)
                     target_state[entity_id] = update
             else:
                 self.clear_overrides_and_expectations(entity_id)
-                if state: state.attributes.pop('Control', None)
+                if state: new_attributes.pop('Control', None)
                     
             if state:
-                self.hass.states.set(entity_id, state.state, state.attributes)
+                self.hass.states.set(entity_id, state.state, new_attributes)
                 
         for (entity_id, state) in target_state.items():
             if entity_id in needs_update:
