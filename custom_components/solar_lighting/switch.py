@@ -21,11 +21,22 @@ from homeassistant.util.color import (
 from math import tanh
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
+    ATTR_BRIGHTNESS_PCT,
+    ATTR_BRIGHTNESS_STEP,
+    ATTR_BRIGHTNESS_STEP_PCT,
     ATTR_COLOR_TEMP,
+    ATTR_COLOR_TEMP_KELVIN,
     ATTR_RGB_COLOR,
     ATTR_TRANSITION,
     ATTR_XY_COLOR,
     ATTR_COLOR_MODE,
+    ATTR_FLASH,
+    ATTR_EFFECT,
+    ATTR_KELVIN,
+    ATTR_HS_COLOR,
+    ATTR_RGBW_COLOR,
+    ATTR_RGBWW_COLOR,
+    ATTR_WHITE,
     ColorMode,
 )
 
@@ -436,17 +447,32 @@ class MainSwitch(SwitchEntity, RestoreEntity):
     async def _intercept_service_call(self, call, data):
         if not(self._state):
             return
-
         # annoyingly there is no way to walk the chain of parents
         if call.context == self.context:
             return
+
         
         entities = data.get(ATTR_ENTITY_ID)
         params = data["params"]
+
+        if ATTR_FLASH in params or ATTR_EFFECT in params:
+            return
+        
         targets_my_entity = False
         targets_other_entity = False
-        control_brightness = ATTR_BRIGHTNESS in params
-        control_temperature = ATTR_COLOR_TEMP in params
+        control_brightness = ATTR_BRIGHTNESS in params \
+            or ATTR_BRIGHTNESS_PCT in params \
+            or ATTR_BRIGHTNESS_STEP_PCT in params \
+            or ATTR_BRIGHTNESS_PCT in params
+        control_temperature = ATTR_COLOR_TEMP in params \
+            or ATTR_COLOR_TEMP_KELVIN in params \
+            or ATTR_RGB_COLOR in params \
+            or ATTR_KELVIN in params \
+            or ATTR_HS_COLOR in params \
+            or ATTR_RGBW_COLOR in params \
+            or ATTR_RGBWW_COLOR in params \
+            or ATTR_XY_COLOR in params \
+            or ATTR_WHITE in params
         target_state = {}
         times = None
 

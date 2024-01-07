@@ -18,7 +18,7 @@ The other integrations cannot be told to control groups and their members, as th
 
 This means sending lots of simultaneous zigbee messages when the brightness / temperature changes, which doesn't work well in my network. Sometimes lights miss their message, or they change visibly out of sync.
 
-My integration is aware of zigbee groups, and uses this to send as few zigbee messages as possible. If every member of a group is on and being controlled, messages will go to the group.
+My integration is aware of zigbee groups, and uses this to send as few zigbee messages as possible. If every member of a group is on and being controlled, messages will go to the group. Turn on commands to the group can also be rewritten.
 
 # Config
 
