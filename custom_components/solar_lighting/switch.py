@@ -185,7 +185,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 for sub_id in light.get("group"):
                     sub_light = {**light,
                                  **self._lights_by_id.get(sub_id, {ATTR_ENTITY_ID: sub_id}),
-                                 "group":None}
+                                 "group":[]}
                     
                     self._lights_by_id[sub_id] = sub_light
     
