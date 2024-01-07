@@ -442,6 +442,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         entities = data.get(ATTR_ENTITY_ID)
         params = data["params"]
 
+        if not(entities): return
+
         if ATTR_FLASH in params or ATTR_EFFECT in params:
             return
         
