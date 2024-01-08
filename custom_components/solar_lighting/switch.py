@@ -361,7 +361,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 )
         if turn_ons:
             await asyncio.wait(turn_ons)
-        
 
     def set_manual_brightness(self, entity_id):
         if entity_id not in self._manual_brightness:
@@ -389,7 +388,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         await self.hass.services.async_call(
             LIGHT_DOMAIN, SERVICE_TURN_ON, state, context=self.context, blocking = True
         )
-        await asyncio.sleep(0.1) #+state[ATTR_TRANSITION])
+        await asyncio.sleep(0.5 + state[ATTR_TRANSITION])
         await self.hass.services.async_call(
             LIGHT_DOMAIN, SERVICE_TURN_ON, brightness_only, context = self.context
         )
