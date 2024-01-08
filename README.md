@@ -52,12 +52,6 @@ My integration is aware of zigbee groups, and uses this to send as few zigbee me
         - light.some_light # a light
         - entity_id: light.some_group # a zigbee group
           group: light.x, light.y, light.z # members of group
-        - entity_id: light.y # a light which needs turning on twice
-                             # because it's in a group and doesn't
-                             # support brightness / temperature so
-                             # doesn't respond to group turn on
-                             # events when they have these attributes.
-          turn_on_twice: true
         - entity_id: light.q
           temperature_min: 3000 # special min temperature for this light
 ```
@@ -76,8 +70,6 @@ All the toplevel parameters except `sleep` and `update_interval` can be overridd
   
   This only works for simple cases.
 - I assume all lights have the IKEA tradfri transition temperature / brightness bug (can't change them simultaneously), because all my lights do; so a light update will first update temperature then brightness.
-- I have some lights that don't support brightness / temperature grouped with others that do.
-  It seems like they need an extra turn_on call if they get told brightness / temperature.
   
 # TODO
 
