@@ -380,18 +380,21 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         brightness_only = state.copy()
         del brightness_only[ATTR_COLOR_TEMP]
         del state[ATTR_BRIGHTNESS]
-                
+        
         transition = brightness_only[ATTR_TRANSITION] / 2
         brightness_only[ATTR_TRANSITION] = transition
         state[ATTR_TRANSITION] = transition
-    
+        log.info("A %s", time.time())
         await self.hass.services.async_call(
             LIGHT_DOMAIN, SERVICE_TURN_ON, state, context=self.context, blocking = True
         )
+        log.info("B %s", time.time())
         await asyncio.sleep(0.5 + state[ATTR_TRANSITION])
+        log.info("C %s", time.time())
         await self.hass.services.async_call(
             LIGHT_DOMAIN, SERVICE_TURN_ON, brightness_only, context = self.context
         )
+        log.info("D %s", time.time())
             
     async def async_added_to_hass(self):
         self.async_on_remove(
