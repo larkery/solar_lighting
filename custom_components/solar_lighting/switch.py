@@ -62,15 +62,15 @@ brightness = vol.All( vol.Coerce(int), vol.Range(min=1, max=255) )
 color_temp = vol.All( vol.Coerce(int), vol.Range(min=1000, max=10000) )
 
 settings_schema = vol.Schema({
-    vol.Optional("brightness_update_delta", default=2): cv.positive_int,
+    vol.Optional("brightness_update_delta", default=1): cv.positive_int,
     vol.Optional("temperature_update_delta", default=100): cv.positive_int,
     vol.Optional("brightness_adjust", default = True): cv.boolean,
-    vol.Optional("brightness_min", default=25): brightness,
+    vol.Optional("brightness_min", default=100): brightness,
     vol.Optional("brightness_max", default=255): brightness,
     vol.Optional("temperature_adjust", default = True): cv.boolean,
     vol.Optional("temperature_min", default = 2202): color_temp,
     vol.Optional("temperature_max", default = 4000): color_temp,
-    vol.Optional("brightness_k", default = 30.0): float,
+    vol.Optional("brightness_k", default = 25.0): float,
     vol.Optional("brightness_x", default = 0.0): float,
     vol.Optional("temperature_k", default = 22.0): float,
     vol.Optional("temperature_x", default = 0.04): float,
