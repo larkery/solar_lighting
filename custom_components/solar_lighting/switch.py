@@ -63,7 +63,7 @@ color_temp = vol.All( vol.Coerce(int), vol.Range(min=1000, max=10000) )
 
 settings_schema = vol.Schema({
     vol.Optional("brightness_update_delta", default=1): cv.positive_int,
-    vol.Optional("temperature_update_delta", default=100): cv.positive_int,
+    vol.Optional("temperature_update_delta", default=1): cv.positive_int,
     vol.Optional("brightness_adjust", default = True): cv.boolean,
     vol.Optional("brightness_min", default=100): brightness,
     vol.Optional("brightness_max", default=255): brightness,
@@ -120,7 +120,7 @@ PLATFORM_SCHEMA = vol.All(
     vol.Schema({
         vol.Required(CONF_PLATFORM): "solar_lighting",
         vol.Optional(CONF_NAME, default="Solar Lighting"): cv.string,
-        vol.Optional("update_interval", default = datetime.timedelta(minutes = 1)): cv.positive_time_period,
+        vol.Optional("update_interval", default = datetime.timedelta(seconds = 30)): cv.positive_time_period,
         vol.Optional("sleep", default = True): cv.boolean,
         vol.Optional("lights"): vol.Schema([
             vol.Any(
@@ -188,7 +188,10 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                                  "group":[]}
                     
                     self._lights_by_id[sub_id] = sub_light
-    
+
+
+            light["temperature_min"] = color_temperature_kelvin_to_mired(light["temperature_min"])
+            light["temperature_max"] = color_temperature_kelvin_to_mired(light["temperature_max"])
             self._lights_by_id[light.get(ATTR_ENTITY_ID)] = { **self._lights_by_id.get(light.get(ATTR_ENTITY_ID), {}),
                                                               **light }
 
@@ -254,9 +257,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 update = {}
                 cur_brightness = state.attributes.get(ATTR_BRIGHTNESS)
                 cur_temperature = state.attributes.get(ATTR_COLOR_TEMP)
-                if cur_temperature:
-                    # we do temperature in kelvin but we talk to HA about mired, so invert
-                    cur_temperature = color_temperature_mired_to_kelvin(cur_temperature)
                 
                 ex_brightness = self._expected_brightness.get(entity_id, cur_brightness)
                 ex_temperature = self._expected_temperature.get(entity_id, cur_temperature)
@@ -308,9 +308,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     self._expected_brightness[entity_id] = state[ATTR_BRIGHTNESS]
                 if ATTR_COLOR_TEMP in state:
                     self._expected_temperature[entity_id] = state[ATTR_COLOR_TEMP]
-            # everything past this point works in mired, not kelvin
-            if ATTR_COLOR_TEMP in state:
-                state[ATTR_COLOR_TEMP] = color_temperature_kelvin_to_mired(state[ATTR_COLOR_TEMP])
 
         if target_state:
             log.info("Before grouping: %s", target_state)
@@ -490,11 +487,10 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 elif is_on:
                     pass
                 else:
-                    tgt[ATTR_COLOR_TEMP] = color_temperature_kelvin_to_mired(
-                        evaluate_temperature(self._sleep_mode,
-                                             times,
-                                             light)
-                    )
+                    tgt[ATTR_COLOR_TEMP] = evaluate_temperature(self._sleep_mode,
+                                                                times,
+                                                                light)
+
 
                 if tgt:
                     target_state[entity] = tgt
@@ -509,7 +505,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 
                 if ATTR_COLOR_TEMP in value:
                     params[ATTR_COLOR_TEMP] = value[ATTR_COLOR_TEMP]
-                    ex = color_temperature_mired_to_kelvin(value[ATTR_COLOR_TEMP])
+                    ex = value[ATTR_COLOR_TEMP]
                     for eid in target_state:
                         self._expected_temperature[eid] = ex
                 if ATTR_BRIGHTNESS in value:
