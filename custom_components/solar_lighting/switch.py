@@ -169,12 +169,22 @@ class MainSwitch(SwitchEntity, RestoreEntity):
 
         self._lights_by_id = {}
         common_config = {k: config.get(k) for k in common_keys}
+        if common_config.get("temperature_min"):
+            common_config["temperature_min"] = color_temperature_kelvin_to_mired(common_config["temperature_min"])
+        if common_config.get("temperature_max"):
+                common_config["temperature_max"] = color_temperature_kelvin_to_mired(common_config["temperature_max"])
+
         for light in config.get("lights", []):
+            if light.get("temperature_min"):
+                light["temperature_min"] = color_temperature_kelvin_to_mired(light["temperature_min"])
+            if light.get("temperature_max"):
+                light["temperature_max"] = color_temperature_kelvin_to_mired(light["temperature_max"])
+            
             if isinstance(light, str):
                 light = {**common_config, ATTR_ENTITY_ID: light}
             else:
                 light = {**common_config, **light}
-
+                
             if not(light.get("sleep_brightness")):
                 light["sleep_brightness"] = light.get("brightness_min")
             if not(light.get("sleep_temperature")):
@@ -190,8 +200,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                     self._lights_by_id[sub_id] = sub_light
 
 
-            light["temperature_min"] = color_temperature_kelvin_to_mired(light["temperature_min"])
-            light["temperature_max"] = color_temperature_kelvin_to_mired(light["temperature_max"])
             self._lights_by_id[light.get(ATTR_ENTITY_ID)] = { **self._lights_by_id.get(light.get(ATTR_ENTITY_ID), {}),
                                                               **light }
 
