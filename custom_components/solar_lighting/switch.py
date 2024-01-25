@@ -175,14 +175,13 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 common_config["temperature_max"] = color_temperature_kelvin_to_mired(common_config["temperature_max"])
 
         for light in config.get("lights", []):
-            if light.get("temperature_min"):
-                light["temperature_min"] = color_temperature_kelvin_to_mired(light["temperature_min"])
-            if light.get("temperature_max"):
-                light["temperature_max"] = color_temperature_kelvin_to_mired(light["temperature_max"])
-            
             if isinstance(light, str):
                 light = {**common_config, ATTR_ENTITY_ID: light}
             else:
+                if light.get("temperature_min"):
+                    light["temperature_min"] = color_temperature_kelvin_to_mired(light["temperature_min"])
+                if light.get("temperature_max"):
+                    light["temperature_max"] = color_temperature_kelvin_to_mired(light["temperature_max"])
                 light = {**common_config, **light}
                 
             if not(light.get("sleep_brightness")):
