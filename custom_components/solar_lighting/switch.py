@@ -12,10 +12,6 @@ from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.util import slugify
-from homeassistant.util.color import (
-    color_temperature_kelvin_to_mired,
-    color_temperature_mired_to_kelvin,
-)
 from math import tanh
 from homeassistant.components.light import (
     ATTR_BRIGHTNESS,
@@ -168,18 +164,18 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         self._lights_by_id = {}
         common_config = {k: config.get(k) for k in common_keys}
         if common_config.get("temperature_min"):
-            common_config["temperature_min"] = color_temperature_kelvin_to_mired(common_config["temperature_min"])
+            common_config["temperature_min"] = common_config["temperature_min"]
         if common_config.get("temperature_max"):
-                common_config["temperature_max"] = color_temperature_kelvin_to_mired(common_config["temperature_max"])
+            common_config["temperature_max"] = common_config["temperature_max"]
 
         for light in config.get("lights", []):
             if isinstance(light, str):
                 light = {**common_config, ATTR_ENTITY_ID: light}
             else:
                 if light.get("temperature_min"):
-                    light["temperature_min"] = color_temperature_kelvin_to_mired(light["temperature_min"])
+                    light["temperature_min"] = light["temperature_min"]
                 if light.get("temperature_max"):
-                    light["temperature_max"] = color_temperature_kelvin_to_mired(light["temperature_max"])
+                    light["temperature_max"] = light["temperature_max"]
                 light = {**common_config, **light}
                 
             if not(light.get("sleep_brightness")):
