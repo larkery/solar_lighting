@@ -148,7 +148,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         name = config.get("name")
         self._config = config
         self._extra_attributes = {}
-        self._name = f"Solar Lighting {name}"
+        self._name = f"SL {name}"
         self._entity_id = f"switch.solar_lighting_{slugify(name)}"
         self._sleep_mode = None
         self._state = None
