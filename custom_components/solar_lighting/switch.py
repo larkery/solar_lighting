@@ -22,7 +22,6 @@ from homeassistant.components.light import (
     ATTR_BRIGHTNESS_PCT,
     ATTR_BRIGHTNESS_STEP,
     ATTR_BRIGHTNESS_STEP_PCT,
-    ATTR_COLOR_TEMP,
     ATTR_COLOR_NAME,
     ATTR_COLOR_TEMP_KELVIN,
     ATTR_RGB_COLOR,
@@ -241,7 +240,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             evaluate_brightness(self._sleep_mode,
                                 times,
                                 self._config)
-        self._extra_attributes[ATTR_COLOR_TEMP] = \
+        self._extra_attributes[ATTR_COLOR_TEMP_KELVIN] = \
             evaluate_temperature(self._sleep_mode,
                                  times,
                                  self._config)
@@ -263,7 +262,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             if state and state.state == STATE_ON:
                 update = {}
                 cur_brightness = state.attributes.get(ATTR_BRIGHTNESS)
-                cur_temperature = state.attributes.get(ATTR_COLOR_TEMP)
+                cur_temperature = state.attributes.get(ATTR_COLOR_TEMP_KELVIN)
                 
                 ex_brightness = self._expected_brightness.get(entity_id, cur_brightness)
                 ex_temperature = self._expected_temperature.get(entity_id, cur_temperature)
@@ -298,7 +297,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
 
                 if entity_id not in self._manual_temperature and light.get("temperature_adjust"):
                     temperature = evaluate_temperature(self._sleep_mode, times, light)
-                    update[ATTR_COLOR_TEMP] = temperature
+                    update[ATTR_COLOR_TEMP_KELVIN] = temperature
                     if not(cur_temperature) or abs(cur_temperature - temperature) > temperature_delta:
                         if supports_temperature:
                             needs_update.add(entity_id)
@@ -313,8 +312,8 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             if entity_id in needs_update:
                 if ATTR_BRIGHTNESS in state:
                     self._expected_brightness[entity_id] = state[ATTR_BRIGHTNESS]
-                if ATTR_COLOR_TEMP in state:
-                    self._expected_temperature[entity_id] = state[ATTR_COLOR_TEMP]
+                if ATTR_COLOR_TEMP_KELVIN in state:
+                    self._expected_temperature[entity_id] = state[ATTR_COLOR_TEMP_KELVIN]
 
         if target_state:
             log.info("Before grouping: %s", target_state)
@@ -351,7 +350,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             if ATTR_TRANSITION in state \
                and state[ATTR_TRANSITION] > 0 \
                and ATTR_BRIGHTNESS in state \
-               and ATTR_COLOR_TEMP in state:
+               and ATTR_COLOR_TEMP_KELVIN in state:
                 turn_ons.append(
                     self.hass.async_create_task( self.async_split_turn_on( state ) )
                 )
@@ -382,7 +381,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             
     async def async_split_turn_on(self, state):
         brightness_only = state.copy()
-        del brightness_only[ATTR_COLOR_TEMP]
+        del brightness_only[ATTR_COLOR_TEMP_KELVIN]
         del state[ATTR_BRIGHTNESS]
         
         transition = brightness_only[ATTR_TRANSITION] / 2
@@ -457,8 +456,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             or ATTR_BRIGHTNESS_PCT in params \
             or ATTR_BRIGHTNESS_STEP_PCT in params \
             or ATTR_BRIGHTNESS_PCT in params
-        control_temperature = ATTR_COLOR_TEMP in params \
-            or ATTR_COLOR_TEMP_KELVIN in params \
+        control_temperature = ATTR_COLOR_TEMP_KELVIN in params \
             or ATTR_RGB_COLOR in params \
             or ATTR_KELVIN in params \
             or ATTR_HS_COLOR in params \
@@ -494,9 +492,9 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 elif is_on:
                     pass
                 else:
-                    tgt[ATTR_COLOR_TEMP] = evaluate_temperature(self._sleep_mode,
-                                                                times,
-                                                                light)
+                    tgt[ATTR_COLOR_TEMP_KELVIN] = evaluate_temperature(self._sleep_mode,
+                                                                       times,
+                                                                       light)
 
 
                 if tgt:
@@ -510,9 +508,9 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 value = target_values[0]
                 log.info("Adapt to %s", value)
                 
-                if ATTR_COLOR_TEMP in value:
-                    params[ATTR_COLOR_TEMP] = value[ATTR_COLOR_TEMP]
-                    ex = value[ATTR_COLOR_TEMP]
+                if ATTR_COLOR_TEMP_KELVIN in value:
+                    params[ATTR_COLOR_TEMP_KELVIN] = value[ATTR_COLOR_TEMP_KELVIN]
+                    ex = value[ATTR_COLOR_TEMP_KELVIN]
                     for eid in target_state:
                         self._expected_temperature[eid] = ex
                 if ATTR_BRIGHTNESS in value:
