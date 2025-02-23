@@ -30,7 +30,6 @@ from homeassistant.components.light import (
     ATTR_COLOR_MODE,
     ATTR_FLASH,
     ATTR_EFFECT,
-    ATTR_KELVIN,
     ATTR_HS_COLOR,
     ATTR_RGBW_COLOR,
     ATTR_RGBWW_COLOR,
@@ -458,7 +457,6 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             or ATTR_BRIGHTNESS_PCT in params
         control_temperature = ATTR_COLOR_TEMP_KELVIN in params \
             or ATTR_RGB_COLOR in params \
-            or ATTR_KELVIN in params \
             or ATTR_HS_COLOR in params \
             or ATTR_RGBW_COLOR in params \
             or ATTR_RGBWW_COLOR in params \
