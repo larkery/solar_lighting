@@ -413,14 +413,16 @@ class MainSwitch(SwitchEntity, RestoreEntity):
             async_track_time_interval(self.hass, self.update_lights, self._update_interval)
         )
 
-        async def on_state_change(entity_id, from_state, to_state):
-            self.clear_overrides_and_expectations(entity_id)
+        async def on_state_change(event):
+            entity_id = event.data["entity_id"]
+            to_state = event.data["new_state"]
+            if to_state == "off":
+                self.clear_overrides_and_expectations(entity_id)
         
         self.async_on_remove(
-            async_track_state_change(self.hass,
-                                     self._lights_by_id.keys(),
-                                     on_state_change,
-                                     to_state = ["off"])
+            async_track_state_change_event(self.hass,
+                                           self._lights_by_id.keys(),
+                                           on_state_change)
         )
 
         if self._state is not None: return
