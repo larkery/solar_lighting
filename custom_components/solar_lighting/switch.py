@@ -43,7 +43,7 @@ from homeassistant.const import (
 
 from homeassistant.helpers.event import (
     async_track_time_interval,
-    async_track_state_change
+    async_track_state_change_event
 )
 
 from . import DOMAIN
