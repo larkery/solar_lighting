@@ -432,12 +432,12 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         await self.update_lights()
         
     async def _intercept_service_call(self, call, data):
+        log.info(f"maybe intercept {call} {data}")
         if not(self._state):
             return
         # annoyingly there is no way to walk the chain of parents
         if call.context == self.context:
             return
-
         
         entities = data.get(ATTR_ENTITY_ID)
         params = data["params"]
@@ -518,6 +518,7 @@ class MainSwitch(SwitchEntity, RestoreEntity):
                 log.warning("divergent values %s", target_state)
         elif target_state:
             log.warning("call covers other entities, fail")
+        log.debug(f"adapted state {params}")
 
             
     async def async_set_sleep_mode(self, sleep_mode):
