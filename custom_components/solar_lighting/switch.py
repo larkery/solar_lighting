@@ -500,22 +500,21 @@ class MainSwitch(SwitchEntity, RestoreEntity):
         # todo need to wipe memory when things are off
         if target_state and not(targets_other_entity):
             target_values = list(target_state.values())
-            if all_equal(target_values):
-                value = target_values[0]
-                log.info("Adapt to %s", value)
-                
-                if ATTR_COLOR_TEMP_KELVIN in value:
-                    params[ATTR_COLOR_TEMP_KELVIN] = value[ATTR_COLOR_TEMP_KELVIN]
-                    ex = value[ATTR_COLOR_TEMP_KELVIN]
-                    for eid in target_state:
-                        self._expected_temperature[eid] = ex
-                if ATTR_BRIGHTNESS in value:
-                    params[ATTR_BRIGHTNESS] = value[ATTR_BRIGHTNESS]
-                    for eid in target_state:
-                        self._expected_brightness[eid] = value[ATTR_BRIGHTNESS]
-
-            else:
+            if not(all_equal(target_values)):
                 log.warning("divergent values %s", target_state)
+
+            value = target_values[0]
+            log.info("Adapt to %s", value)
+
+            if ATTR_COLOR_TEMP_KELVIN in value:
+                params[ATTR_COLOR_TEMP_KELVIN] = value[ATTR_COLOR_TEMP_KELVIN]
+                ex = value[ATTR_COLOR_TEMP_KELVIN]
+                for eid in target_state:
+                    self._expected_temperature[eid] = ex
+            if ATTR_BRIGHTNESS in value:
+                params[ATTR_BRIGHTNESS] = value[ATTR_BRIGHTNESS]
+                for eid in target_state:
+                    self._expected_brightness[eid] = value[ATTR_BRIGHTNESS]
         elif target_state:
             log.warning("call covers other entities, fail")
         log.debug(f"adapted state {params}")
