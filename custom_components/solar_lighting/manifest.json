@@ -2,7 +2,7 @@
   "domain": "solar_lighting",
   "name": "Solar Lighting",
   "codeowners": ["@larkery"],
-  "dependencies": ["switch"],
+  "dependencies": ["switch", "light"],
   "iot_class": "calculated",
   "requirements": [],
   "version": "1.0.0",
